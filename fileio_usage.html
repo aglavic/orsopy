@@ -1,0 +1,194 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usage &mdash; orsopy 1.2.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="shortcut icon" href="_static/ORSO_Logo_bear.svg"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=ca842793"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            orsopy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents.html">Documents</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">orsopy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Usage</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fileio_usage.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h1>
+<p>The easiest way to use <a class="reference internal" href="orsopy.fileio.html#module-orsopy.fileio" title="orsopy.fileio"><code class="xref py py-mod docutils literal notranslate"><span class="pre">orsopy.fileio</span></code></a> (the module of <a class="reference internal" href="orsopy.html#module-orsopy" title="orsopy"><code class="xref py py-mod docutils literal notranslate"><span class="pre">orsopy</span></code></a> that includes file reading and writing) to produce <strong>metadata-rich .ort reduced reflectometry files</strong> involves integrating this into your data reduction workflow.
+Early in the workflow, the <a class="reference internal" href="orsopy.fileio.html#module-orsopy.fileio" title="orsopy.fileio"><code class="xref py py-mod docutils literal notranslate"><span class="pre">orsopy.fileio</span></code></a> should be imported and an empty <code class="code docutils literal notranslate"><span class="pre">orsopy.fileio.orso.Orso</span></code> header object (here we also import <code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code> which will be used later).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">orsopy</span><span class="w"> </span><span class="kn">import</span> <span class="n">fileio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">orsopy.fileio</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">Reduction</span><span class="p">,</span> <span class="n">Person</span><span class="p">,</span> <span class="n">Orso</span><span class="p">,</span> <span class="n">Experiment</span><span class="p">,</span>
+                           <span class="n">Sample</span><span class="p">,</span> <span class="n">DataSource</span><span class="p">,</span> <span class="n">Measurement</span><span class="p">,</span> <span class="n">InstrumentSettings</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+
+<span class="n">header</span> <span class="o">=</span> <span class="n">fileio</span><span class="o">.</span><span class="n">orso</span><span class="o">.</span><span class="n">Orso</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Having created the empty header object we can start to populate the appropriate components of it.
+It is generally a good idea to populate the components as particular steps occur in the reduction process.
+In this example we fill out the experiment details and then wrap them in the appropriate class.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;my title&#39;</span>
+<span class="n">instrument</span> <span class="o">=</span> <span class="s1">&#39;PLATYPUS&#39;</span>
+<span class="n">start_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>  <span class="c1"># This needs to be an object of the type datetime</span>
+<span class="n">probe</span> <span class="o">=</span> <span class="s1">&#39;neutron&#39;</span>
+<span class="n">facility</span> <span class="o">=</span> <span class="s1">&#39;ESS&#39;</span>
+<span class="n">proposalID</span> <span class="o">=</span> <span class="mi">999999</span>
+<span class="n">doi</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;10.5286/ISIS.E.RB</span><span class="si">{</span><span class="mi">99999</span><span class="si">}</span><span class="s1">&#39;</span>
+
+<span class="n">experiment</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">instrument</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">facility</span><span class="p">,</span> <span class="n">proposalID</span><span class="p">,</span> <span class="n">doi</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Full details of the different components that can be populated can be found in the <a class="reference external" href="./modules.html#fileio">documentation</a> here or in the <a class="reference external" href="https://www.reflectometry.org/file_format/specification">file format specification</a>.
+Note that this specification includes information regarding the <strong>required</strong> and optional components to be included for a file to be considered a <strong>valid</strong> .ort file.
+What we show here is not the minimum needed to write an <cite>.ort</cite> file, rather the minium to fill out all the major fields with information which is likely to be available at time of writing.</p>
+<p>We now write out the user and sample details, but note that the sample can be alot more descriptive than just a name.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">user_name</span> <span class="o">=</span> <span class="s1">&#39;Jos Cooper&#39;</span>
+<span class="n">user_affil</span> <span class="o">=</span> <span class="s1">&#39;ESS&#39;</span>
+
+<span class="n">user</span> <span class="o">=</span> <span class="n">Person</span><span class="p">(</span><span class="n">user_name</span><span class="p">,</span> <span class="n">user_affil</span><span class="p">)</span>
+
+<span class="c1"># Now fill the sample details</span>
+<span class="n">sample_name</span> <span class="o">=</span> <span class="s1">&#39;Silicon&#39;</span>
+
+<span class="n">sample</span> <span class="o">=</span> <span class="n">Sample</span><span class="p">(</span><span class="n">sample_name</span><span class="p">)</span>
+
+<span class="c1"># The measurement details needs some instrument settings assigned first</span>
+<span class="n">angle</span> <span class="o">=</span> <span class="mf">0.3</span>  <span class="c1"># This can be a float, or a range, though currently not a list</span>
+<span class="n">wavelength</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.8</span><span class="p">,</span> <span class="mf">8.8</span><span class="p">)</span>  <span class="c1"># Again a float or range</span>
+
+<span class="n">instrument_settings</span> <span class="o">=</span> <span class="n">InstrumentSettings</span><span class="p">(</span><span class="n">angle</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">)</span>
+
+<span class="c1"># Now add the instrument settings to the names of the files used</span>
+<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;test_data.raw&#39;</span><span class="p">]</span>  <span class="c1"># A list of all raw files used reduced</span>
+
+<span class="n">measurment</span> <span class="o">=</span> <span class="n">Measurement</span><span class="p">(</span><span class="n">instrument_settings</span><span class="p">,</span> <span class="n">files</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can now wrap together the user, experiment, sample and measurement information into a single object.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data_source_info</span> <span class="o">=</span> <span class="n">DataSource</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">sample</span><span class="p">,</span> <span class="n">measurment</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>It is not possible to write an <cite>.ort</cite> file without defining the columns present in the dataset, in this example we will have four columns of data, namely q, R, dR and dq (the final column is a description of the resolution function).
+Columns are defined as follows, using the <code class="code docutils literal notranslate"><span class="pre">orsopy.fileio.base.Column</span></code> and <code class="code docutils literal notranslate"><span class="pre">orsopy.fileio.base.ErrorColumn</span></code> class objects.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interpreted units are [&quot;1/angstrom&quot;, &quot;1/nm&quot;, &quot;1&quot;, &quot;1/s&quot;, None]</span>
+<span class="n">q_column</span> <span class="o">=</span> <span class="n">fileio</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Qz&#39;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;1/angstrom&#39;</span><span class="p">,</span> <span class="n">physical_quantity</span><span class="o">=</span><span class="s1">&#39;wavevector transfer&#39;</span><span class="p">)</span>
+<span class="n">r_column</span> <span class="o">=</span> <span class="n">fileio</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">physical_quantity</span><span class="o">=</span><span class="s1">&#39;reflectivity&#39;</span><span class="p">)</span>
+<span class="n">dr_column</span> <span class="o">=</span> <span class="n">fileio</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">ErrorColumn</span><span class="p">(</span><span class="n">error_of</span><span class="o">=</span><span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="n">error_type</span><span class="o">=</span><span class="s1">&#39;uncertainty&#39;</span><span class="p">,</span> <span class="n">value_is</span><span class="o">=</span><span class="s1">&#39;sigma&#39;</span><span class="p">)</span>
+<span class="n">dq_column</span> <span class="o">=</span> <span class="n">fileio</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">ErrorColumn</span><span class="p">(</span><span class="n">error_of</span><span class="o">=</span><span class="s1">&#39;Qz&#39;</span><span class="p">,</span> <span class="n">error_type</span><span class="o">=</span><span class="s1">&#39;resolution&#39;</span><span class="p">,</span> <span class="n">value_is</span><span class="o">=</span><span class="s1">&#39;sigma&#39;</span><span class="p">)</span>
+
+<span class="n">header</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">q_column</span><span class="p">,</span> <span class="n">r_column</span><span class="p">,</span> <span class="n">dr_column</span><span class="p">,</span> <span class="n">dq_column</span><span class="p">]</span>
+<span class="c1"># We can also make some data so that this code example will write something out</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.01</span><span class="p">,</span><span class="mf">0.02</span><span class="p">,</span><span class="mf">0.03</span><span class="p">])</span>
+<span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span><span class="mf">0.2</span><span class="p">,</span><span class="mf">0.3</span><span class="p">])</span>
+<span class="n">dR</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.001</span><span class="p">,</span><span class="mf">0.002</span><span class="p">,</span><span class="mf">0.003</span><span class="p">])</span>
+<span class="n">dq</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="mf">0.02</span>
+</pre></div>
+</div>
+<p>Any <strong>required</strong> metadata that is not included in the head will be written in the file as containing <code class="code docutils literal notranslate"><span class="pre">null</span></code>.</p>
+<p>Now, we then want to assign the data that we want to write (this will be after your data reduction has been performed).
+This is achieved by producing a <code class="code docutils literal notranslate"><span class="pre">fileio.orso.OrsoDataset</span></code> object, which takes the header and the relevant data columns (below these are <code class="code docutils literal notranslate"><span class="pre">q</span></code>, <code class="code docutils literal notranslate"><span class="pre">R</span></code>, <code class="code docutils literal notranslate"><span class="pre">dR</span></code>, and <code class="code docutils literal notranslate"><span class="pre">dq</span></code>) as inputs.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">orso_class</span> <span class="o">=</span> <span class="n">Orso</span><span class="p">(</span><span class="n">data_source_info</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="n">Reduction</span><span class="p">(</span><span class="s1">&#39;My own code&#39;</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="n">header</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>  <span class="c1"># reduction can also be assigned out of this funciton call</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">fileio</span><span class="o">.</span><span class="n">orso</span><span class="o">.</span><span class="n">OrsoDataset</span><span class="p">(</span><span class="n">info</span><span class="o">=</span><span class="n">orso_class</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">dR</span><span class="p">,</span> <span class="n">dq</span><span class="p">])</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The dataset can then be saved with the following function, where <code class="code docutils literal notranslate"><span class="pre">'my_file.ort'</span></code> is the name for the file to be saved under.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fileio</span><span class="o">.</span><span class="n">orso</span><span class="o">.</span><span class="n">save_orso</span><span class="p">(</span><span class="n">datasets</span><span class="o">=</span><span class="p">[</span><span class="n">dataset</span><span class="p">],</span> <span class="n">fname</span><span class="o">=</span><span class="s1">&#39;my_file.ort&#39;</span><span class="p">)</span>  <span class="c1"># note that the first input is a list of datasets</span>
+</pre></div>
+</div>
+<p>Note that if you want to save more than one dataset in a single file, this can be achieved by including these in the list that is passed to this function.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, ORSO.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

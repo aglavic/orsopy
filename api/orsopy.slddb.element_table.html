@@ -1,0 +1,251 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>orsopy.slddb.element_table package &mdash; orsopy 1.2.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../_static/ORSO_Logo_bear.svg"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fd7cadf9"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="orsopy.utils package" href="orsopy.utils.html" />
+    <link rel="prev" title="orsopy.slddb package" href="orsopy.slddb.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            orsopy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="orsopy.html">Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="orsopy.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="orsopy.fileio.html">orsopy.fileio package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="orsopy.slddb.html">orsopy.slddb package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="orsopy.slddb.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="orsopy.slddb.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="orsopy.slddb.html#module-orsopy.slddb.comparators">orsopy.slddb.comparators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="orsopy.slddb.html#module-orsopy.slddb.constants">orsopy.slddb.constants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="orsopy.slddb.html#module-orsopy.slddb.converters">orsopy.slddb.converters module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="orsopy.slddb.html#module-orsopy.slddb.database">orsopy.slddb.database module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="orsopy.slddb.html#module-orsopy.slddb.dbconfig">orsopy.slddb.dbconfig module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="orsopy.slddb.html#module-orsopy.slddb.importers">orsopy.slddb.importers module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="orsopy.slddb.html#module-orsopy.slddb.material">orsopy.slddb.material module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="orsopy.slddb.html#module-orsopy.slddb.webapi">orsopy.slddb.webapi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="orsopy.utils.html">orsopy.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="orsopy.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="orsopy.html#module-orsopy.orb2ort">orsopy.orb2ort module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="orsopy.html#module-orsopy.ort2orb">orsopy.ort2orb module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../documents.html">Documents</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">orsopy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="orsopy.html">orsopy package</a></li>
+          <li class="breadcrumb-item"><a href="orsopy.slddb.html">orsopy.slddb package</a></li>
+      <li class="breadcrumb-item active">orsopy.slddb.element_table package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/orsopy.slddb.element_table.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-orsopy.slddb.element_table">
+<span id="orsopy-slddb-element-table-package"></span><h1>orsopy.slddb.element_table package<a class="headerlink" href="#module-orsopy.slddb.element_table" title="Link to this heading"></a></h1>
+<p>Package containing all elemental data used for SLD calculations.</p>
+<p>Main function is get_element(value) that returns an Element object for a given Z-number or identifier.
+The objects are stored in a dictionary for faster lookup as well as keeping the objects for each element the same.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.get_element">
+<span class="sig-prename descclassname"><span class="pre">orsopy.slddb.element_table.</span></span><span class="sig-name descname"><span class="pre">get_element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/orsopy/slddb/element_table.html#get_element"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orsopy.slddb.element_table.get_element" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-orsopy.slddb.element_table.element">
+<span id="orsopy-slddb-element-table-element-module"></span><h2>orsopy.slddb.element_table.element module<a class="headerlink" href="#module-orsopy.slddb.element_table.element" title="Link to this heading"></a></h2>
+<p>Defining the Element class that is used to hold all needed data for one element/isotope.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">orsopy.slddb.element_table.element.</span></span><span class="sig-name descname"><span class="pre">Element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/orsopy/slddb/element_table/element.html#Element"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orsopy.slddb.element_table.element.Element" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element.N">
+<span class="sig-name descname"><span class="pre">N</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#orsopy.slddb.element_table.element.Element.N" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element.f_of_E">
+<span class="sig-name descname"><span class="pre">f_of_E</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Ei</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/orsopy/slddb/element_table/element.html#Element.f_of_E"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orsopy.slddb.element_table.element.Element.f_of_E" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element.b_of_L">
+<span class="sig-name descname"><span class="pre">b_of_L</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Li</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/orsopy/slddb/element_table/element.html#Element.b_of_L"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orsopy.slddb.element_table.element.Element.b_of_L" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element.E">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">E</span></span><a class="headerlink" href="#orsopy.slddb.element_table.element.Element.E" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element.f">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">f</span></span><a class="headerlink" href="#orsopy.slddb.element_table.element.Element.f" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element.fp">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fp</span></span><a class="headerlink" href="#orsopy.slddb.element_table.element.Element.fp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element.fpp">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fpp</span></span><a class="headerlink" href="#orsopy.slddb.element_table.element.Element.fpp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element.has_ndata">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">has_ndata</span></span><a class="headerlink" href="#orsopy.slddb.element_table.element.Element.has_ndata" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element.Lamda">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Lamda</span></span><a class="headerlink" href="#orsopy.slddb.element_table.element.Element.Lamda" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element.b_abs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">b_abs</span></span><a class="headerlink" href="#orsopy.slddb.element_table.element.Element.b_abs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orsopy.slddb.element_table.element.Element.b_lambda">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">b_lambda</span></span><a class="headerlink" href="#orsopy.slddb.element_table.element.Element.b_lambda" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-orsopy.slddb.element_table.masses">
+<span id="orsopy-slddb-element-table-masses-module"></span><h2>orsopy.slddb.element_table.masses module<a class="headerlink" href="#module-orsopy.slddb.element_table.masses" title="Link to this heading"></a></h2>
+<p>Raw data imported from NIST <a class="reference external" href="https://www.nist.gov/pml/atomic-weights-and-isotopic-compositions-relative-atomic-masses">https://www.nist.gov/pml/atomic-weights-and-isotopic-compositions-relative-atomic-masses</a>
+The atomic weights data were published by J. Meija et al in Atomic Weights of the Elements 2013, 
+and the isotopic compositions data were published by M. Berglund and
+M.E. Wieser in Isotopic Compositions of the Elements 2009.
+The relative atomic masses of the isotopes data were published by M. Wang, G. Audi, A.H. Wapstra, F.G. Kondev,
+M. MacCormick, X. Xu1, and B. Pfeiffer in The AME2012 Atomic Mass Evaluation.</p>
+</section>
+<section id="module-orsopy.slddb.element_table.nabs_geant4">
+<span id="orsopy-slddb-element-table-nabs-geant4-module"></span><h2>orsopy.slddb.element_table.nabs_geant4 module<a class="headerlink" href="#module-orsopy.slddb.element_table.nabs_geant4" title="Link to this heading"></a></h2>
+<p>Neutron cross sections extracted from Geant4 by the ESS dgcode framework (doi:10.1016/j.physb.2018.03.025).</p>
+</section>
+<section id="module-orsopy.slddb.element_table.nlengths">
+<span id="orsopy-slddb-element-table-nlengths-module"></span><h2>orsopy.slddb.element_table.nlengths module<a class="headerlink" href="#module-orsopy.slddb.element_table.nlengths" title="Link to this heading"></a></h2>
+<p><a class="reference external" href="https://www.ncnr.nist.gov/resources/n-lengths/list.html">https://www.ncnr.nist.gov/resources/n-lengths/list.html</a>
+Neutron scattering lengths and cross sections
+Isotope conc    Coh b   Inc b   Coh xs  Inc xs  Scatt xs        Abs xs</p>
+</section>
+<section id="module-orsopy.slddb.element_table.nlengths_pt">
+<span id="orsopy-slddb-element-table-nlengths-pt-module"></span><h2>orsopy.slddb.element_table.nlengths_pt module<a class="headerlink" href="#module-orsopy.slddb.element_table.nlengths_pt" title="Link to this heading"></a></h2>
+<p>Rauch, H. and Waschkowski, W. (2003) Neutron Scattering Lengths in ILL Neutron Data Booklet (second edition),
+A.-J. Dianoux, G. Lander, Eds. Old City Publishing, Philidelphia, PA. pp 1.1-1 to 1.1-17.
+(<a class="reference external" href="https://www.ill.eu/fileadmin/user_upload/ILL/1_About_ILL/Documentation/NeutronDataBooklet.pdf">https://www.ill.eu/fileadmin/user_upload/ILL/1_About_ILL/Documentation/NeutronDataBooklet.pdf</a>)
+Imported from python periodictable package</p>
+</section>
+<section id="module-orsopy.slddb.element_table.xray_henke">
+<span id="orsopy-slddb-element-table-xray-henke-module"></span><h2>orsopy.slddb.element_table.xray_henke module<a class="headerlink" href="#module-orsopy.slddb.element_table.xray_henke" title="Link to this heading"></a></h2>
+<p>Data downloaded from Henke tables at <a class="reference external" href="https://henke.lbl.gov/optical_constants/asf.html">https://henke.lbl.gov/optical_constants/asf.html</a></p>
+</section>
+<section id="module-orsopy.slddb.element_table.xray_nist">
+<span id="orsopy-slddb-element-table-xray-nist-module"></span><h2>orsopy.slddb.element_table.xray_nist module<a class="headerlink" href="#module-orsopy.slddb.element_table.xray_nist" title="Link to this heading"></a></h2>
+<p>Data downloaded from NIST Standard Reference Database at <a class="reference external" href="https://physics.nist.gov/PhysRefData/FFast/html/form.html">https://physics.nist.gov/PhysRefData/FFast/html/form.html</a></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="orsopy.slddb.html" class="btn btn-neutral float-left" title="orsopy.slddb package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="orsopy.utils.html" class="btn btn-neutral float-right" title="orsopy.utils package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, ORSO.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

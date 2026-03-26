@@ -1,0 +1,10 @@
+orsopy.slddb.element\_table.nabs\_geant4\_data package
+======================================================
+
+Module contents
+---------------
+
+.. automodule:: orsopy.slddb.element_table.nabs_geant4_data
+   :members:
+   :undoc-members:
+   :show-inheritance:

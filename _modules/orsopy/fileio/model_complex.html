@@ -1,0 +1,230 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>orsopy.fileio.model_complex &mdash; orsopy 1.2.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/ORSO_Logo_bear.svg"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=fd7cadf9"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            orsopy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/orsopy.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../documents.html">Documents</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">orsopy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">orsopy.fileio.model_complex</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for orsopy.fileio.model_complex</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Build-in blocks of physical units used in model to describe more complex systems.</span>
+
+<span class="sd">All these need to follow the .model_building_blocks.SubStackType protocol and</span>
+<span class="sd">have a common &quot;sub_stack_class&quot; attribute that has to be set to the class name.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComplexValue</span><span class="p">,</span> <span class="n">Header</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Value</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.model_building_blocks</span><span class="w"> </span><span class="kn">import</span> <span class="n">SPECIAL_MATERIALS</span><span class="p">,</span> <span class="n">Composit</span><span class="p">,</span> <span class="n">Layer</span><span class="p">,</span> <span class="n">Material</span><span class="p">,</span> <span class="n">ModelParameters</span><span class="p">,</span> <span class="n">SubStackType</span>
+
+
+<div class="viewcode-block" id="FunctionTwoElements">
+<a class="viewcode-back" href="../../../orsopy.fileio.model_complex.html#orsopy.fileio.model_complex.FunctionTwoElements">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FunctionTwoElements</span><span class="p">(</span><span class="n">Header</span><span class="p">,</span> <span class="n">SubStackType</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Models a continuous variation between two materials/SLDs according to an analytical function.</span>
+
+<span class="sd">    The profile rho(z) is defined according to the relative layer thickness as fraction of material 2:</span>
+<span class="sd">        rho(z) = (1-f((x-x0)/thickness))*rho_1 + f((x-x0)/thickness)*rho_2</span>
+
+<span class="sd">    f is bracketed between 0 and 1 to prevent any artefacts with SLDs that are non-physical.</span>
+
+<span class="sd">    The function string is evaluated according to python syntax using only build-in operators</span>
+<span class="sd">    and a limited set of mathematical functions and constants defined in the class constant **ALLOWED_FUNCTIONS**.</span>
+
+<span class="sd">    TODO: Review class parameters within ORSO.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">material1</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">material2</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">function</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">thickness</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Value</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">roughness</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Value</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">slice_resolution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Value</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">sub_stack_class</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;FunctionTwoElements&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;FunctionTwoElements&quot;</span>
+
+    <span class="n">ALLOWED_FUNCTIONS</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;pi&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sqrt&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sin&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;cos&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tan&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sinh&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;cosh&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tanh&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;asin&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;acos&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;atan&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+<div class="viewcode-block" id="FunctionTwoElements.resolve_names">
+<a class="viewcode-back" href="../../../orsopy.fileio.model_complex.html#orsopy.fileio.model_complex.FunctionTwoElements.resolve_names">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resolvable_items</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_materials</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">material1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">material2</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">mi</span> <span class="ow">in</span> <span class="n">resolvable_items</span><span class="p">:</span>
+                <span class="n">material</span> <span class="o">=</span> <span class="n">resolvable_items</span><span class="p">[</span><span class="n">mi</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">mi</span> <span class="ow">in</span> <span class="n">SPECIAL_MATERIALS</span><span class="p">:</span>
+                <span class="n">material</span> <span class="o">=</span> <span class="n">SPECIAL_MATERIALS</span><span class="p">[</span><span class="n">mi</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">material</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="n">formula</span><span class="o">=</span><span class="n">mi</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_materials</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">material</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FunctionTwoElements.resolve_defaults">
+<a class="viewcode-back" href="../../../orsopy.fileio.model_complex.html#orsopy.fileio.model_complex.FunctionTwoElements.resolve_defaults">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">defaults</span><span class="p">:</span> <span class="n">ModelParameters</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">Value</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">defaults</span><span class="o">.</span><span class="n">length_unit</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span> <span class="n">Value</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">defaults</span><span class="o">.</span><span class="n">length_unit</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">length_unit</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">roughness</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">roughness</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">roughness</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roughness</span><span class="p">,</span> <span class="n">Value</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">roughness</span> <span class="o">=</span> <span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roughness</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">defaults</span><span class="o">.</span><span class="n">length_unit</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">roughness</span><span class="o">.</span><span class="n">unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">roughness</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">length_unit</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slice_resolution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">slice_resolution</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">slice_resolution</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slice_resolution</span><span class="p">,</span> <span class="n">Value</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">slice_resolution</span> <span class="o">=</span> <span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slice_resolution</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">defaults</span><span class="o">.</span><span class="n">length_unit</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">slice_resolution</span><span class="o">.</span><span class="n">unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">slice_resolution</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">length_unit</span></div>
+
+
+<div class="viewcode-block" id="FunctionTwoElements.resolve_to_layers">
+<a class="viewcode-back" href="../../../orsopy.fileio.model_complex.html#orsopy.fileio.model_complex.FunctionTwoElements.resolve_to_layers">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_to_layers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Layer</span><span class="p">]:</span>
+        <span class="c1"># pre-defined math functions allowed</span>
+        <span class="n">glo</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ALLOWED_FUNCTIONS</span><span class="p">:</span>
+            <span class="n">param</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">math</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="n">glo</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span>
+
+        <span class="c1"># use the approximate slice resolution but make sure the total thickness is exact</span>
+        <span class="n">length_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">unit</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">magnitude</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">slice_resolution</span><span class="o">.</span><span class="n">as_unit</span><span class="p">(</span><span class="n">length_unit</span><span class="p">)))</span>
+        <span class="n">di</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">magnitude</span> <span class="o">/</span> <span class="n">slices</span>
+        <span class="n">thickness</span> <span class="o">=</span> <span class="n">Value</span><span class="p">(</span><span class="n">magnitude</span><span class="o">=</span><span class="n">di</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">length_unit</span><span class="p">)</span>
+        <span class="n">roughness</span> <span class="o">=</span> <span class="n">Value</span><span class="p">(</span><span class="n">magnitude</span><span class="o">=</span><span class="n">di</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">length_unit</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">slices</span><span class="p">):</span>
+            <span class="n">loc</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="n">slices</span><span class="p">}</span>
+            <span class="n">fraction</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">eval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function</span><span class="p">,</span> <span class="n">glo</span><span class="p">,</span> <span class="n">loc</span><span class="p">)))</span>
+            <span class="n">composition</span> <span class="o">=</span> <span class="n">Composit</span><span class="p">(</span><span class="n">composition</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">material1</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">fraction</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">material2</span><span class="p">:</span> <span class="n">fraction</span><span class="p">})</span>
+            <span class="n">composition</span><span class="o">.</span><span class="n">resolve_names</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">material1</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_materials</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">material2</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_materials</span><span class="p">[</span><span class="mi">1</span><span class="p">]})</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Layer</span><span class="p">(</span><span class="n">material</span><span class="o">=</span><span class="n">composition</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="n">thickness</span><span class="p">,</span> <span class="n">roughness</span><span class="o">=</span><span class="n">roughness</span><span class="p">))</span>
+        <span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">roughness</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">roughness</span>
+        <span class="k">return</span> <span class="n">output</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, ORSO.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

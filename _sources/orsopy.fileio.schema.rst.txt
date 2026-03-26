@@ -1,0 +1,10 @@
+orsopy.fileio.schema package
+============================
+
+Module contents
+---------------
+
+.. automodule:: orsopy.fileio.schema
+   :members:
+   :undoc-members:
+   :show-inheritance:

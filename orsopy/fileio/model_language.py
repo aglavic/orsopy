@@ -10,6 +10,8 @@ import warnings
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
+import yaml
+
 from ..utils.chemical_formula import Formula
 from . import model_complex
 from .base import Header, Literal
@@ -26,13 +28,13 @@ def find_idx(string, start, value):
     return next_idx
 
 
-def find_closing(string, start):
+def find_closing(string, start, brackets="()"):
     open_brackets = 1
     idx = start
     while idx < len(string):
-        if string[idx] == "(":
+        if string[idx] == brackets[0]:
             open_brackets += 1
-        if string[idx] == ")":
+        if string[idx] == brackets[1]:
             open_brackets -= 1
             if open_brackets == 0:
                 return idx
@@ -87,6 +89,24 @@ class SubStack(Header, SubStackType):
                         # if there is a higher level envirnment, it is kept if not overwritten
                         environment = self.environment
                     obj = SubStack(repetitions=rep, stack=sub_stack.strip(), environment=environment)
+                elif "{" in stack[idx:next_idx]:
+                    # allow supplying SubStackType classes to be defined in the stack string directly
+                    # with the syntac ClassName{p1: v1, p2: v2}
+                    open_idx = find_idx(stack, idx, "{")
+                    close_idx = find_closing(stack, open_idx + 1, brackets="{}")
+                    class_name = stack[idx:open_idx].strip()
+                    for T in SubStackType.__subclasses__():
+                        if T.sub_stack_class == class_name:
+                            ssclass = T
+                            break
+                    obj = ssclass.from_dict(yaml.load(stack[open_idx : close_idx + 1], Loader=yaml.FullLoader))
+                    try:
+                        thickness = float(stack[close_idx + 1 : next_idx].strip())
+                    except ValueError:
+                        pass
+                    else:
+                        if getattr(obj, "thickness", "ignore") is None:
+                            obj.thickness = thickness
                 else:
                     items = stack[idx:next_idx].strip().rsplit(None, 1)
                     item = items[0].strip()
@@ -279,6 +299,24 @@ class SampleModel(Header):
                 else:
                     environment = None
                 obj = SubStack(repetitions=rep, stack=sub_stack.strip(), environment=environment)
+            elif "{" in stack[idx:next_idx]:
+                # allow supplying SubStackType classes to be defined in the stack string directly
+                # with the syntac ClassName{p1: v1, p2: v2}
+                open_idx = find_idx(stack, idx, "{")
+                close_idx = find_closing(stack, open_idx + 1, brackets="{}")
+                class_name = stack[idx:open_idx].strip()
+                for T in SubStackType.__subclasses__():
+                    if T.sub_stack_class == class_name:
+                        ssclass = T
+                        break
+                obj = ssclass.from_dict(yaml.load(stack[open_idx : close_idx + 1], Loader=yaml.FullLoader))
+                try:
+                    thickness = float(stack[close_idx + 1 : next_idx].strip())
+                except ValueError:
+                    pass
+                else:
+                    if getattr(obj, "thickness", "ignore") is None:
+                        obj.thickness = thickness
             else:
                 items = stack[idx:next_idx].strip().rsplit(None, 1)
                 item = items[0].strip()

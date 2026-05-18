@@ -172,6 +172,10 @@ class Bilayer(Header, SubStackType):
             self._environment = defaults.default_solvent
         else:
             self._environment.resolve_defaults(defaults)
+        if isinstance(self.apm, Value) and self.apm.unit is None:
+            self.apm.unit = defaults.length_unit + "^2"
+        elif not isinstance(self.apm, Value):
+            self.apm = Value(self.apm, unit=defaults.length_unit + "^2")
 
     def resolve_to_layers(self) -> List[Layer]:
         for material in [self._environment] + self._materials:

@@ -148,20 +148,6 @@ class Material(Header):
 
 
 @dataclass
-class ModelParameters(Header):
-    roughness: Optional[Value] = field(default_factory=lambda: Value(0.3, "nm"))
-    length_unit: Optional[str] = "nm"
-    mass_density_unit: Optional[str] = "g/cm^3"
-    number_density_unit: Optional[str] = "1/nm^3"
-    sld_unit: Optional[str] = "1/angstrom^2"
-    magnetic_moment_unit: Optional[str] = "muB"
-    slice_resolution: Optional[Value] = field(default_factory=lambda: Value(1.0, "nm"))
-    default_solvent: Optional[Material] = field(
-        default_factory=lambda: Material(formula="H2O", mass_density=Value(1.0, "g/cm^3"))
-    )
-
-
-@dataclass
 class Composit(Header):
     composition: Dict[str, float]
 
@@ -184,7 +170,7 @@ class Composit(Header):
 
             self._composition_materials[key] = material
 
-    def resolve_defaults(self, defaults: ModelParameters):
+    def resolve_defaults(self, defaults: "ModelParameters"):
         for mat in self._composition_materials.values():
             mat.resolve_defaults(defaults)
 
@@ -207,6 +193,25 @@ class Composit(Header):
     def get_sld(self, xray_energy=None):
         material = self.generate_density(xray_energy=xray_energy)
         return material.get_sld(xray_energy=xray_energy)
+
+
+@dataclass
+class ModelParameters(Header):
+    roughness: Optional[Value] = field(default_factory=lambda: Value(0.3, "nm"))
+    length_unit: Optional[str] = "nm"
+    mass_density_unit: Optional[str] = "g/cm^3"
+    number_density_unit: Optional[str] = "1/nm^3"
+    sld_unit: Optional[str] = "1/angstrom^2"
+    magnetic_moment_unit: Optional[str] = "muB"
+    slice_resolution: Optional[Value] = field(default_factory=lambda: Value(1.0, "nm"))
+    default_solvent: Optional[Union[Material, Composit, str]] = field(
+        default_factory=lambda: Material(formula="H2O", mass_density=Value(1.0, "g/cm^3"))
+    )
+
+    def __post_init__(self):
+        super().__post_init__()
+        if isinstance(self.default_solvent, str):
+            self.default_solvent = Material(formula=self.default_solvent)
 
 
 SPECIAL_MATERIALS = {

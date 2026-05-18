@@ -124,8 +124,8 @@ class Bilayer(Header, SubStackType):
 
     _known_lipids = {
         "DMPC": (
-            Material(formula="C10H18O8NP", number_density=Value(1.0 / 3.19, "nm^2")),
-            Material(formula="C26H54", number_density=Value(1.0 / 7.82, "nm^2")),
+            Material(formula="C10H18O8NP", number_density=Value(1.0 / 3.19, "1/nm^2")),
+            Material(formula="C26H54", number_density=Value(1.0 / 7.82, "1/nm^2")),
         ),
     }
 
@@ -142,8 +142,12 @@ class Bilayer(Header, SubStackType):
     _environment = None
 
     def resolve_names(self, resolvable_items):
+        if self.lipid is None:
+            oi_mats = (self.outer, self.inner)
+        else:
+            oi_mats = self._known_lipids[self.lipid]
         self._materials = []
-        for i, mi in enumerate([self.outer, self.inner]):
+        for i, mi in enumerate(oi_mats):
             if isinstance(mi, Material):
                 material = mi
             elif mi in resolvable_items:
@@ -155,12 +159,13 @@ class Bilayer(Header, SubStackType):
             self._materials.append(material)
         if "environment" in resolvable_items:
             self._environment = resolvable_items["environment"]
-            if self._environment in resolvable_items:
-                self._environment = resolvable_items[self._environment]
-            elif self._environment in SPECIAL_MATERIALS:
-                self._environment = SPECIAL_MATERIALS[self._environment]
-            elif isinstance(self._environment, str):
-                self._environment = Material(formula=self._environment)
+            if not isinstance(self._environment, Material):
+                if self._environment in resolvable_items:
+                    self._environment = resolvable_items[self._environment]
+                elif self._environment in SPECIAL_MATERIALS:
+                    self._environment = SPECIAL_MATERIALS[self._environment]
+                elif isinstance(self._environment, str):
+                    self._environment = Material(formula=self._environment)
 
     def resolve_defaults(self, defaults: ModelParameters) -> None:
         if not self._environment:

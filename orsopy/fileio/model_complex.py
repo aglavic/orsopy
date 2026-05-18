@@ -5,10 +5,12 @@ All these need to follow the .model_building_blocks.SubStackType protocol and
 have a common "sub_stack_class" attribute that has to be set to the class name.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional, Union
 
-from .base import ComplexValue, Header, Literal, Value
+from ..slddb.constants import u2g
+from ..utils.chemical_formula import Formula
+from .base import Header, Literal, Value
 from .model_building_blocks import SPECIAL_MATERIALS, Composit, Layer, Material, ModelParameters, SubStackType
 
 
@@ -108,3 +110,77 @@ class FunctionTwoElements(Header, SubStackType):
             output.append(Layer(material=composition, thickness=thickness, roughness=roughness))
         output[0].roughness = self.roughness
         return output
+
+
+@dataclass
+class Bilayer(Header, SubStackType):
+    """
+    Building block corresponding to a bilayer of lipids with outer (heads) and inner (tails)
+    molecule definition. The bilayer is calculated from molecular volume, area per molecule (apm) and
+    the level of hydration.
+    The solvent used is either the environment set by a SubStack above or the default_solvent attribute
+    of the ModelParameters.
+    """
+
+    _known_lipids = {
+        "DMPC": (
+            Material(formula="C10H18O8NP", number_density=Value(1.0 / 3.19, "nm^2")),
+            Material(formula="C26H54", number_density=Value(1.0 / 7.82, "nm^2")),
+        ),
+    }
+
+    lipid: Optional[Literal["DMPC"]] = None
+    outer: Optional[Union[Material, str]] = None
+    inner: Optional[Union[Material, str]] = None
+    apm: Optional[Union[float, Value]] = field(default_factory=lambda: Value(0.7, unit="nm^2"))
+    outer_hydration: Optional[float] = 0.3
+    inner_hydration: Optional[float] = 0.3
+    outer_hydration_2: Optional[float] = None
+    inner_hydration_2: Optional[float] = None
+    sub_stack_class: Literal["Bilayer"] = "Bilayer"
+
+    _environment = None
+
+    def resolve_names(self, resolvable_items):
+        self._materials = []
+        for i, mi in enumerate([self.outer, self.inner]):
+            if isinstance(mi, Material):
+                material = mi
+            elif mi in resolvable_items:
+                material = resolvable_items[mi]
+            elif mi in SPECIAL_MATERIALS:
+                material = SPECIAL_MATERIALS[mi]
+            else:
+                material = Material(formula=mi)
+            self._materials.append(material)
+        if "environment" in resolvable_items:
+            self._environment = resolvable_items["environment"]
+            if self._environment in resolvable_items:
+                self._environment = resolvable_items[self._environment]
+            elif self._environment in SPECIAL_MATERIALS:
+                self._environment = SPECIAL_MATERIALS[self._environment]
+            elif isinstance(self._environment, str):
+                self._environment = Material(formula=self._environment)
+
+    def resolve_defaults(self, defaults: ModelParameters) -> None:
+        if not self._environment:
+            self._environment = defaults.default_solvent
+        else:
+            self._environment.resolve_defaults(defaults)
+
+    def resolve_to_layers(self) -> List[Layer]:
+        for material in [self._environment] + self._materials:
+            material.generate_density()
+            if material.number_density is None:
+                # need to generate number density from mass density and formula
+                formula = Formula(material.formula, strict=True)
+                fu_mass = 0.0
+                for element, number in formula.elements:
+                    if element.mass is None:
+                        raise ValueError(f"No mass known for element {element}")
+                    fu_mass += number * element.mass
+                material.number_density = Value(
+                    material.mass_density.as_unit("g/cm^3") / fu_mass / u2g * 1e21, unit="1/nm^3"
+                )
+
+        return []

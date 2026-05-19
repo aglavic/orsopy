@@ -224,6 +224,6 @@ class Bilayer(Header, SubStackType):
 
         head = Layer(thickness=d_head, material=m_head_1, roughness=self.roughness)
         tail = Layer(thickness=d_tail, material=m_tail_1, roughness=self.roughness)
-        head_2 = Layer(thickness=d_tail, material=m_tail_2, roughness=self.roughness)
-        tail_2 = Layer(thickness=d_head, material=m_head_2, roughness=self.roughness)
+        tail_2 = Layer(thickness=d_tail, material=m_tail_2, roughness=self.roughness)
+        head_2 = Layer(thickness=d_head, material=m_head_2, roughness=self.roughness)
         return [head, tail, tail_2, head_2]

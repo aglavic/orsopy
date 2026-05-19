@@ -39,6 +39,7 @@ def main(txt=None):
     # initial model before resolving any names
     print(repr(sample), "\n")
     print("\n".join([repr(ss) for ss in sample.resolve_stack()]), "\n")
+    print("\n".join([repr(ss) for ss in sample.resolve_to_blocks()]), "\n")
 
     layers = sample.resolve_to_layers()
     print("\n".join([repr(li) for li in layers]))

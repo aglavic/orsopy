@@ -1,0 +1,33 @@
+sample:
+    model:
+        stack: "Si | Bilayer{lipid: DMPC} | lbl2 | (lbl3) in H2O | H2O"
+        sub_stacks:
+          lbl2:
+            sub_stack_class: Bilayer
+            lipid: DMPC
+            apm: {magnitude: 0.8, unit: nm^2}
+            outer_hydration: 0.3
+            inner_hydration: 0.3
+            inner_hydration_2: 0.4
+            outer_hydration_2: 0.5
+          lbl3:
+            sub_stack_class: Bilayer
+            outer:
+                formula: C10H18O8NP
+                number_density: 0.3135 # 1/nm^2
+            inner:
+                formula: C26H54
+                number_density: 0.128 # 1/nm^2
+            apm: 0.9 # nm^2
+            outer_hydration: 0.3
+            inner_hydration: 0.3
+            inner_hydration_2: 0.4
+            outer_hydration_2: 0.5
+        globals:
+            default_solvent:  D2O
+
+        # below is just used for orsopy testing and not part of this model
+        test:
+          stacks: 5
+          blocks: 5
+          layers: 14

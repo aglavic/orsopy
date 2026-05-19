@@ -124,8 +124,8 @@ class Bilayer(Header, SubStackType):
 
     _known_lipids = {
         "DMPC": (
-            Material(formula="C10H18O8NP", number_density=Value(1.0 / 3.19, "1/nm^2")),
-            Material(formula="C26H54", number_density=Value(1.0 / 7.82, "1/nm^2")),
+            Material(formula="C10H18O8NP", number_density=Value(1.0 / 3.19, "1/nm^3")),
+            Material(formula="C26H54", number_density=Value(1.0 / 7.82, "1/nm^3")),
         ),
     }
 
@@ -137,6 +137,7 @@ class Bilayer(Header, SubStackType):
     inner_hydration: Optional[float] = 0.3
     outer_hydration_2: Optional[float] = None
     inner_hydration_2: Optional[float] = None
+    roughness: Optional[Union[float, Value]] = None
     sub_stack_class: Literal["Bilayer"] = "Bilayer"
 
     _environment = None
@@ -177,6 +178,22 @@ class Bilayer(Header, SubStackType):
         elif not isinstance(self.apm, Value):
             self.apm = Value(self.apm, unit=defaults.length_unit + "^2")
 
+        for mi in self._materials:
+            mi.resolve_defaults(defaults)
+
+        if self.roughness is None:
+            self.roughness = defaults.roughness
+        elif not isinstance(self.roughness, Value):
+            self.roughness = Value(self.roughness, unit=defaults.length_unit)
+        elif self.roughness.unit is None:
+            self.roughness.unit = defaults.length_unit
+
+    @staticmethod
+    def mixed_material(material: Material, solvent: Material, fraction: float):
+        srdens = solvent.number_density.magnitude / material.number_density.as_unit(solvent.number_density.unit)
+        FU = f"({material.formula}){1-fraction}({solvent.formula}){srdens*fraction}"
+        return Material(formula=FU, number_density=material.number_density)
+
     def resolve_to_layers(self) -> List[Layer]:
         for material in [self._environment] + self._materials:
             material.generate_density()
@@ -192,4 +209,20 @@ class Bilayer(Header, SubStackType):
                     material.mass_density.as_unit("g/cm^3") / fu_mass / u2g * 1e21, unit="1/nm^3"
                 )
 
-        return []
+        d_head = Value(1.0 / (self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm")
+        d_tail = Value(1.0 / (self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm")
+
+        m_head_1 = self.mixed_material(self._materials[0], self._environment, self.outer_hydration)
+        m_head_2 = self.mixed_material(
+            self._materials[0], self._environment, self.outer_hydration_2 or self.outer_hydration
+        )
+        m_tail_1 = self.mixed_material(self._materials[1], self._environment, self.inner_hydration)
+        m_tail_2 = self.mixed_material(
+            self._materials[1], self._environment, self.inner_hydration_2 or self.inner_hydration
+        )
+
+        head = Layer(thickness=d_head, material=m_head_1, roughness=self.roughness)
+        tail = Layer(thickness=d_tail, material=m_tail_1, roughness=self.roughness)
+        head_2 = Layer(thickness=d_tail, material=m_tail_2, roughness=self.roughness)
+        tail_2 = Layer(thickness=d_head, material=m_head_2, roughness=self.roughness)
+        return [head, tail, tail_2, head_2]

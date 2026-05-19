@@ -32,7 +32,7 @@ def main(txt=None):
             dtxt = dtxt["data_source"]
         if "sample" in dtxt:
             dtxt = dtxt["sample"]["model"]
-        sample = model_language.SampleModel(**dtxt)
+        sample = model_language.SampleModel.from_dict(dtxt)
         txt += f"\n{sample.stack}"
     else:
         sample = model_language.SampleModel(stack=txt)

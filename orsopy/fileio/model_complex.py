@@ -137,6 +137,7 @@ class Bilayer(Header, SubStackType):
     inner_hydration: Optional[float] = 0.3
     outer_hydration_2: Optional[float] = None
     inner_hydration_2: Optional[float] = None
+    coverage: Optional[float] = 1.0
     roughness: Optional[Union[float, Value]] = None
     sub_stack_class: Literal["Bilayer"] = "Bilayer"
 
@@ -188,10 +189,10 @@ class Bilayer(Header, SubStackType):
         elif self.roughness.unit is None:
             self.roughness.unit = defaults.length_unit
 
-    @staticmethod
-    def mixed_material(material: Material, solvent: Material, fraction: float):
+    def mixed_material(self, material: Material, solvent: Material, hydtration: float):
+        mat_frac = (1.0 - hydtration) * self.coverage
         srdens = solvent.number_density.magnitude / material.number_density.as_unit(solvent.number_density.unit)
-        FU = f"({material.formula}){1-fraction}({solvent.formula}){srdens*fraction}"
+        FU = f"({material.formula}){mat_frac}({solvent.formula}){srdens*(1.-mat_frac)}"
         return Material(formula=FU, number_density=material.number_density)
 
     def resolve_to_layers(self) -> List[Layer]:

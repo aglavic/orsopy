@@ -23,6 +23,7 @@ sample:
             inner_hydration: 0.3
             inner_hydration_2: 0.4
             outer_hydration_2: 0.5
+            coverage: 0.75
         globals:
             default_solvent:  D2O
 

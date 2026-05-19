@@ -114,6 +114,19 @@ class Material(Header):
         self.number_density = Value(magnitude=0.0, unit="1/nm^3")
         self.comment = "could not locate density information for material"
 
+    @property
+    def volume(self):
+        # returns the FU volume from the density information
+        self.generate_density()
+        if self.number_density is None:
+            return None
+        else:
+            from .base import get_unit_registry
+
+            unit_registry = get_unit_registry()
+            val = 1.0 / (self.number_density.magnitude * unit_registry(self.number_density.unit))
+            return Value(magnitude=val.magnitude, unit=f"{val.units:~}")
+
     def get_sld(self, xray_energy=None) -> complex:
         if self.relative_density is None:
             rel = 1.0

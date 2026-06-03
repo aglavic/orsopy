@@ -5,12 +5,18 @@ sample:
           DMPC:
               sub_stack_class: Leaflet
               heads: PC
-              tails: DM
+              tails:
+                  composition:
+                      DM: 0.9
+                      PC: 0.1
               heads_first: false
           biDMPC:
             sub_stack_class: Bilayer
             outer: PC
-            inner: DM
+            inner:
+                composition:
+                    DM: 0.9
+                    PC: 0.1
             apm: {magnitude: 0.8, unit: nm^2}
             outer_hydration: 0.3
             inner_hydration: 0.3
@@ -20,10 +26,10 @@ sample:
             sub_stack_class: Bilayer
             outer:
                 formula: C10H18O8NP
-                number_density: 0.3135 # 1/nm^2
+                number_density: 3.135 # 1/nm^3
             inner:
                 formula: C26H54
-                number_density: 0.128 # 1/nm^2
+                number_density: 1.28 # 1/nm^3
             apm: 0.9 # nm^2
             outer_hydration: 0.3
             inner_hydration: 0.3
@@ -33,10 +39,10 @@ sample:
         materials:
             PC:
                 formula: C10H18O8NP
-                number_density: 0.3135
+                number_density: 3.135
             DM:
                 formula: C26H54
-                mass_density: 0.0779
+                mass_density: 0.779
         globals:
             default_solvent:  D2O
 

@@ -222,11 +222,14 @@ class Composit(Header):
             reference_density = self._composition_materials[list(self.composition.keys())[0]].number_density
             rd_unit = reference_density.unit
             rd = reference_density.magnitude
-            FU = ""
+            FU = Formula([])
             for key, value in self.composition.items():
                 mi = self._composition_materials[key]
-                FU += f"({mi.formula}){mi.number_density.as_unit(rd_unit)/rd*value}"
-            return Material(formula=FU, number_density=reference_density, comment=f"composition material: {mix_str}")
+                fi = Formula(mi.formula, strict=False)
+                FU += fi * (mi.number_density.as_unit(rd_unit) / rd * value)
+            return Material(
+                formula=str(FU), number_density=reference_density, comment=f"composition material: {mix_str}"
+            )
         else:
             for key, value in self.composition.items():
                 mi = self._composition_materials[key]

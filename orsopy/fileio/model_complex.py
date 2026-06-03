@@ -119,59 +119,19 @@ def mix_hydrate_material(material: Material, solvent: Material, hydtration: floa
     return Material(formula=FU, number_density=material.number_density)
 
 
-@dataclass(repr=False)
-class Leaflet(Header, SubStackType):
+class LipidBase:
     """
-    Building block corresponding to a single layer of lipids with heads and tails
-    molecule definition. The layer is calculated from molecular volume, area per molecule (apm) and
-    the level of hydration.
-    The solvent used is either the environment set by a SubStack above or the default_solvent attribute
-    of the ModelParameters.
-    The order of heads/tails with respect to the beam side can be flipped using heads_first=False.
+    Common mathods used for resolving materials and defaults in Lipid based blocks.
     """
 
-    heads: Union[Material, str]
-    tails: Union[Material, str]
-    heads_first: Optional[bool] = True
-    apm: Optional[Union[float, Value]] = field(default_factory=lambda: Value(0.7, unit="nm^2"))
-    heads_hydration: Optional[float] = 0.3
-    tails_hydration: Optional[float] = 0.3
-    coverage: Optional[float] = 1.0
-    roughness: Optional[Union[float, Value]] = None
-    sub_stack_class: Literal["Leaflet"] = "Leaflet"
-
-    _environment = None
-
-    def resolve_names(self, resolvable_items):
-        self._materials = []
-        for i, mi in enumerate((self.heads, self.tails)):
-            if isinstance(mi, Material):
-                material = mi
-            elif mi in resolvable_items:
-                material = resolvable_items[mi]
-                material.original_name = mi
-            elif mi in SPECIAL_MATERIALS:
-                material = SPECIAL_MATERIALS[mi]
-                material.original_name = mi
-            else:
-                material = Material(formula=mi)
-                material.original_name = mi
-            self._materials.append(material)
-        if "environment" in resolvable_items:
-            self._environment = resolvable_items["environment"]
-            if not isinstance(self._environment, Material):
-                if self._environment in resolvable_items:
-                    self._environment = resolvable_items[self._environment]
-                elif self._environment in SPECIAL_MATERIALS:
-                    self._environment = SPECIAL_MATERIALS[self._environment]
-                elif isinstance(self._environment, str):
-                    self._environment = Material(formula=self._environment)
+    _materials: List[Union[Composit, Material]]
+    apm: Union[float, Value]
+    coverage: float
+    roughness: Optional[Union[float, Value]]
 
     def resolve_defaults(self, defaults: ModelParameters) -> None:
-        if not self._environment:
-            self._environment = defaults.default_solvent
-        else:
-            self._environment.resolve_defaults(defaults)
+        if len(self._materials) != 3:
+            self._materials.append(defaults.default_solvent)
         if isinstance(self.apm, Value) and self.apm.unit is None:
             self.apm.unit = defaults.length_unit + "^2"
         elif not isinstance(self.apm, Value):
@@ -189,6 +149,68 @@ class Leaflet(Header, SubStackType):
 
     def mixed_material(self, material: Material, solvent: Material, hydtration: float):
         return mix_hydrate_material(material, solvent, hydtration, self.coverage)
+
+    def ensure_densities(self):
+        for i, mi in enumerate(self._materials):
+            res = mi.generate_density()
+            if res is not None:
+                # replace Composit by resulting Material
+                self._materials[i] = res
+
+    @property
+    def solvent(self):
+        return self._materials[2]
+
+
+@dataclass(repr=False)
+class Leaflet(Header, LipidBase, SubStackType):
+    """
+    Building block corresponding to a single layer of lipids with heads and tails
+    molecule definition. The layer is calculated from molecular volume, area per molecule (apm) and
+    the level of hydration.
+    The solvent used is either the environment set by a SubStack above or the default_solvent attribute
+    of the ModelParameters.
+    The order of heads/tails with respect to the beam side can be flipped using heads_first=False.
+    """
+
+    heads: Union[Composit, Material, str]
+    tails: Union[Composit, Material, str]
+    heads_first: Optional[bool] = True
+    apm: Optional[Union[float, Value]] = field(default_factory=lambda: Value(0.7, unit="nm^2"))
+    heads_hydration: Optional[float] = 0.3
+    tails_hydration: Optional[float] = 0.3
+    coverage: Optional[float] = 1.0
+    roughness: Optional[Union[float, Value]] = None
+    sub_stack_class: Literal["Leaflet"] = "Leaflet"
+
+    def resolve_names(self, resolvable_items):
+        self._materials = []
+        for i, mi in enumerate((self.heads, self.tails)):
+            if isinstance(mi, Material):
+                material = mi
+            elif isinstance(mi, Composit):
+                mi.resolve_names(resolvable_items)
+                material = mi
+            elif mi in resolvable_items:
+                material = resolvable_items[mi]
+                material.original_name = mi
+            elif mi in SPECIAL_MATERIALS:
+                material = SPECIAL_MATERIALS[mi]
+                material.original_name = mi
+            else:
+                material = Material(formula=mi)
+                material.original_name = mi
+            self._materials.append(material)
+        if "environment" in resolvable_items:
+            environment = resolvable_items["environment"]
+            if not isinstance(self._environment, (Composit, Material)):
+                if environment in resolvable_items:
+                    environment = resolvable_items[environment]
+                elif environment in SPECIAL_MATERIALS:
+                    environment = SPECIAL_MATERIALS[environment]
+                elif isinstance(self._environment, str):
+                    environment = Material(formula=environment)
+            self._materials.append(environment)
 
     def resolve_to_blocks(self) -> List[Union["Layer", "SubStackType"]]:
         # Make sure the block includes full material data
@@ -200,11 +222,18 @@ class Leaflet(Header, SubStackType):
     def resolve_to_layers(self) -> List[Layer]:
         self.ensure_densities()
 
-        d_head = Value(1.0 / (self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm")
-        d_tail = Value(1.0 / (self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm")
+        Vf_head = 1.0 - self.heads_hydration
+        Vf_tail = 1.0 - self.tails_hydration
 
-        m_head = self.mixed_material(self._materials[0], self._environment, self.heads_hydration)
-        m_tail = self.mixed_material(self._materials[1], self._environment, self.tails_hydration)
+        d_head = Value(
+            1.0 / (Vf_head * self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+        )
+        d_tail = Value(
+            1.0 / (Vf_tail * self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+        )
+
+        m_head = self.mixed_material(self._materials[0], self._materials[2], self.heads_hydration)
+        m_tail = self.mixed_material(self._materials[1], self._materials[2], self.tails_hydration)
 
         head = Layer(thickness=d_head, material=m_head, roughness=self.roughness)
         tail = Layer(thickness=d_tail, material=m_tail, roughness=self.roughness)
@@ -213,13 +242,9 @@ class Leaflet(Header, SubStackType):
         else:
             return [tail, head]
 
-    def ensure_densities(self):
-        for material in [self._environment] + self._materials:
-            material.generate_density()
-
 
 @dataclass(repr=False)
-class Bilayer(Header, SubStackType):
+class Bilayer(Header, LipidBase, SubStackType):
     """
     Building block corresponding to a bilayer of lipids with outer (heads) and inner (tails)
     molecule definition. The bilayer is calculated from molecular volume, area per molecule (apm) and
@@ -228,8 +253,8 @@ class Bilayer(Header, SubStackType):
     of the ModelParameters.
     """
 
-    outer: Union[Material, str]
-    inner: Union[Material, str]
+    outer: Union[Composit, Material, str]
+    inner: Union[Composit, Material, str]
     apm: Optional[Union[float, Value]] = field(default_factory=lambda: Value(0.7, unit="nm^2"))
     outer_hydration: Optional[float] = 0.3
     inner_hydration: Optional[float] = 0.3
@@ -239,12 +264,13 @@ class Bilayer(Header, SubStackType):
     roughness: Optional[Union[float, Value]] = None
     sub_stack_class: Literal["Bilayer"] = "Bilayer"
 
-    _environment = None
-
     def resolve_names(self, resolvable_items):
         self._materials = []
         for i, mi in enumerate((self.outer, self.inner)):
             if isinstance(mi, Material):
+                material = mi
+            elif isinstance(mi, Composit):
+                mi.resolve_names(resolvable_items)
                 material = mi
             elif mi in resolvable_items:
                 material = resolvable_items[mi]
@@ -257,37 +283,15 @@ class Bilayer(Header, SubStackType):
                 material.original_name = mi
             self._materials.append(material)
         if "environment" in resolvable_items:
-            self._environment = resolvable_items["environment"]
-            if not isinstance(self._environment, Material):
-                if self._environment in resolvable_items:
-                    self._environment = resolvable_items[self._environment]
-                elif self._environment in SPECIAL_MATERIALS:
-                    self._environment = SPECIAL_MATERIALS[self._environment]
+            environment = resolvable_items["environment"]
+            if not isinstance(environment, Material):
+                if environment in resolvable_items:
+                    environment = resolvable_items[self._environment]
+                elif environment in SPECIAL_MATERIALS:
+                    environment = SPECIAL_MATERIALS[self._environment]
                 elif isinstance(self._environment, str):
-                    self._environment = Material(formula=self._environment)
-
-    def resolve_defaults(self, defaults: ModelParameters) -> None:
-        if not self._environment:
-            self._environment = defaults.default_solvent
-        else:
-            self._environment.resolve_defaults(defaults)
-        if isinstance(self.apm, Value) and self.apm.unit is None:
-            self.apm.unit = defaults.length_unit + "^2"
-        elif not isinstance(self.apm, Value):
-            self.apm = Value(self.apm, unit=defaults.length_unit + "^2")
-
-        for mi in self._materials:
-            mi.resolve_defaults(defaults)
-
-        if self.roughness is None:
-            self.roughness = defaults.roughness
-        elif not isinstance(self.roughness, Value):
-            self.roughness = Value(self.roughness, unit=defaults.length_unit)
-        elif self.roughness.unit is None:
-            self.roughness.unit = defaults.length_unit
-
-    def mixed_material(self, material: Material, solvent: Material, hydtration: float):
-        return mix_hydrate_material(material, solvent, hydtration, self.coverage)
+                    environment = Material(formula=self._environment)
+            self._materials.append(environment)
 
     def resolve_to_blocks(self) -> List[Union["Layer", "SubStackType"]]:
         self.ensure_densities()
@@ -299,24 +303,34 @@ class Bilayer(Header, SubStackType):
     def resolve_to_layers(self) -> List[Layer]:
         self.ensure_densities()
 
-        d_head = Value(1.0 / (self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm")
-        d_tail = Value(1.0 / (self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm")
+        Vf_head_1 = 1.0 - self.outer_hydration
+        Vf_tail_1 = 1.0 - self.inner_hydration
+        Vf_head_2 = 1.0 - (self.outer_hydration_2 or self.outer_hydration)
+        Vf_tail_2 = 1.0 - (self.inner_hydration_2 or self.inner_hydration)
+        d_head_1 = Value(
+            1.0 / (Vf_head_1 * self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+        )
+        d_head_2 = Value(
+            1.0 / (Vf_head_2 * self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+        )
+        d_tail_1 = Value(
+            1.0 / (Vf_tail_1 * self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+        )
+        d_tail_2 = Value(
+            1.0 / (Vf_tail_2 * self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+        )
 
-        m_head_1 = self.mixed_material(self._materials[0], self._environment, self.outer_hydration)
+        m_head_1 = self.mixed_material(self._materials[0], self._materials[2], self.outer_hydration)
         m_head_2 = self.mixed_material(
-            self._materials[0], self._environment, self.outer_hydration_2 or self.outer_hydration
+            self._materials[0], self._materials[2], self.outer_hydration_2 or self.outer_hydration
         )
-        m_tail_1 = self.mixed_material(self._materials[1], self._environment, self.inner_hydration)
+        m_tail_1 = self.mixed_material(self._materials[1], self._materials[2], self.inner_hydration)
         m_tail_2 = self.mixed_material(
-            self._materials[1], self._environment, self.inner_hydration_2 or self.inner_hydration
+            self._materials[1], self._materials[2], self.inner_hydration_2 or self.inner_hydration
         )
 
-        head = Layer(thickness=d_head, material=m_head_1, roughness=self.roughness)
-        tail = Layer(thickness=d_tail, material=m_tail_1, roughness=self.roughness)
-        tail_2 = Layer(thickness=d_tail, material=m_tail_2, roughness=self.roughness)
-        head_2 = Layer(thickness=d_head, material=m_head_2, roughness=self.roughness)
+        head = Layer(thickness=d_head_1, material=m_head_1, roughness=self.roughness)
+        tail = Layer(thickness=d_tail_1, material=m_tail_1, roughness=self.roughness)
+        tail_2 = Layer(thickness=d_tail_2, material=m_tail_2, roughness=self.roughness)
+        head_2 = Layer(thickness=d_head_2, material=m_head_2, roughness=self.roughness)
         return [head, tail, tail_2, head_2]
-
-    def ensure_densities(self):
-        for material in [self._environment] + self._materials:
-            material.generate_density()

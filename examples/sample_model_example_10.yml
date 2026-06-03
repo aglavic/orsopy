@@ -42,6 +42,6 @@ sample:
 
         # below is just used for orsopy testing and not part of this model
         test:
-          stacks: 5
-          blocks: 5
-          layers: 14
+          stacks: 6
+          blocks: 6
+          layers: 16

@@ -28,7 +28,7 @@ class TestHeaderClass(unittest.TestCase):
     """
 
     def test_resolve_any(self):
-        @dataclass
+        @dataclass(repr=False)
         class TestAny(base.Header):
             test: Any
 
@@ -37,7 +37,7 @@ class TestHeaderClass(unittest.TestCase):
         assert res.test is test_object
 
     def test_resolve_datetime(self):
-        @dataclass
+        @dataclass(repr=False)
         class TestDatetime(base.Header):
             test: datetime
 
@@ -55,7 +55,7 @@ class TestHeaderClass(unittest.TestCase):
             def strptime(item, format):
                 return datetime.strptime(item, format)
 
-        @dataclass
+        @dataclass(repr=False)
         class TestDatetime(base.Header):
             test: MockDatetime
 
@@ -80,7 +80,7 @@ class TestHeaderClass(unittest.TestCase):
             # dict type annotation changed in 3.8
             return
 
-        @dataclass
+        @dataclass(repr=False)
         class TestDictof(base.Header):
             test: Dict[str, datetime]
             test2: Dict[float, int]
@@ -92,7 +92,7 @@ class TestHeaderClass(unittest.TestCase):
         assert [(type(ki), type(vi)) for ki, vi in res.test2.items()] == [(float, int), (float, int)]
 
         # Dict should be used to define key/value types
-        @dataclass
+        @dataclass(repr=False)
         class TestDictNodef(base.Header):
             test: Dict
 
@@ -101,7 +101,7 @@ class TestHeaderClass(unittest.TestCase):
         assert res.test == {"ab": "cd"}
 
     def test_resolve_list(self):
-        @dataclass
+        @dataclass(repr=False)
         class TestList(base.Header):
             test: List[int]
 
@@ -115,7 +115,7 @@ class TestHeaderClass(unittest.TestCase):
         assert res.test == [134]
 
     def test_resolve_tuple(self):
-        @dataclass
+        @dataclass(repr=False)
         class TestTuple(base.Header):
             test: Tuple[int, int, int]
 
@@ -134,13 +134,13 @@ class TestHeaderClass(unittest.TestCase):
         assert res.test == (1, 2, 3)
 
     def test_subsubclass(self):
-        @dataclass
+        @dataclass(repr=False)
         class Test1(base.Header):
             pass
 
         with self.assertRaises(NotImplementedError):
 
-            @dataclass
+            @dataclass(repr=False)
             class Test2(Test1):
                 pass
 
@@ -150,7 +150,7 @@ class TestHeaderClass(unittest.TestCase):
         reported as ORSOResolveError.
         """
 
-        @dataclass
+        @dataclass(repr=False)
         class TestDatetime(base.Header):
             test: datetime
 
@@ -166,7 +166,7 @@ class TestHeaderClass(unittest.TestCase):
         Make a class that tests all cases of the empty method.
         """
 
-        @dataclass
+        @dataclass(repr=False)
         class TestEmpty(base.Header):
             test1: float
             test2: base.Value
@@ -197,7 +197,7 @@ class TestHeaderClass(unittest.TestCase):
         res = base._todict(Test1())
         assert res == {"a": "b"}
 
-        @dataclass
+        @dataclass(repr=False)
         class Test2:
             test: int
             test2: float
@@ -207,7 +207,7 @@ class TestHeaderClass(unittest.TestCase):
         assert res == {"test": 13, "test2": 12.4, "test3": "1234", "TestClassKey": "Test2"}
 
     def test_empty_optional(self):
-        @dataclass
+        @dataclass(repr=False)
         class TestOptional(base.Header):
             test1: str
             test2: Optional[float] = None
@@ -221,7 +221,7 @@ class TestHeaderClass(unittest.TestCase):
         self.assertEqual(t2.to_yaml().strip(), "test1: abc")
 
     def test_default_optional(self):
-        @dataclass
+        @dataclass(repr=False)
         class TestOptional(base.Header):
             test1: str
             test2: Optional[float] = 14.5

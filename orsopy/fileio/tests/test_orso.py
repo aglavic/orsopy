@@ -265,7 +265,7 @@ class TestOrso(unittest.TestCase):
         assert i_n.incident_angle.magnitude == 2
 
     def test_nxs_special_cases(self):
-        @dataclass
+        @dataclass(repr=False)
         class TestNxs(Header):
             test: list
             test2: tuple

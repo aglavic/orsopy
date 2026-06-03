@@ -14,7 +14,7 @@ from .base import Header, Literal, Value
 from .model_building_blocks import SPECIAL_MATERIALS, Composit, Layer, Material, ModelParameters, SubStackType
 
 
-@dataclass
+@dataclass(repr=False)
 class FunctionTwoElements(Header, SubStackType):
     """
     Models a continuous variation between two materials/SLDs according to an analytical function.
@@ -119,7 +119,7 @@ def mix_hydrate_material(material: Material, solvent: Material, hydtration: floa
     return Material(formula=FU, number_density=material.number_density)
 
 
-@dataclass
+@dataclass(repr=False)
 class Leaflet(Header, SubStackType):
     """
     Building block corresponding to a single layer of lipids with heads and tails
@@ -216,20 +216,9 @@ class Leaflet(Header, SubStackType):
     def ensure_densities(self):
         for material in [self._environment] + self._materials:
             material.generate_density()
-            if material.number_density is None:
-                # need to generate number density from mass density and formula
-                formula = Formula(material.formula, strict=True)
-                fu_mass = 0.0
-                for element, number in formula.elements:
-                    if element.mass is None:
-                        raise ValueError(f"No mass known for element {element}")
-                    fu_mass += number * element.mass
-                material.number_density = Value(
-                    material.mass_density.as_unit("g/cm^3") / fu_mass / u2g * 1e21, unit="1/nm^3"
-                )
 
 
-@dataclass
+@dataclass(repr=False)
 class Bilayer(Header, SubStackType):
     """
     Building block corresponding to a bilayer of lipids with outer (heads) and inner (tails)
@@ -331,14 +320,3 @@ class Bilayer(Header, SubStackType):
     def ensure_densities(self):
         for material in [self._environment] + self._materials:
             material.generate_density()
-            if material.number_density is None:
-                # need to generate number density from mass density and formula
-                formula = Formula(material.formula, strict=True)
-                fu_mass = 0.0
-                for element, number in formula.elements:
-                    if element.mass is None:
-                        raise ValueError(f"No mass known for element {element}")
-                    fu_mass += number * element.mass
-                material.number_density = Value(
-                    material.mass_density.as_unit("g/cm^3") / fu_mass / u2g * 1e21, unit="1/nm^3"
-                )

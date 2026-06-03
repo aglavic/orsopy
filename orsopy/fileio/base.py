@@ -39,9 +39,9 @@ JSON_MIMETYPE = "application/json"
 yaml.emitter.Emitter.process_tag = _noop
 
 # make sure that datetime strings get loaded as str not datetime instances
-yaml.constructor.SafeConstructor.yaml_constructors["tag:yaml.org,2002:timestamp"] = (
-    yaml.constructor.SafeConstructor.yaml_constructors["tag:yaml.org,2002:str"]
-)
+yaml.constructor.SafeConstructor.yaml_constructors[
+    "tag:yaml.org,2002:timestamp"
+] = yaml.constructor.SafeConstructor.yaml_constructors["tag:yaml.org,2002:str"]
 
 
 class ORSOResolveError(ValueError):
@@ -296,8 +296,7 @@ class Header:
                     return item
                 else:
                     warnings.warn(
-                        f"Has to be one of {get_args(hint)} got {item}",
-                        ORSOSchemaWarning,
+                        f"Has to be one of {get_args(hint)} got {item}", ORSOSchemaWarning,
                     )
                     return str(item)
         return None
@@ -562,7 +561,7 @@ def get_unit_registry():
     return unit_registry
 
 
-@dataclass
+@dataclass(repr=False)
 class ErrorValue(Header):
     """
     Information about errors on a value.
@@ -612,7 +611,7 @@ class ErrorValue(Header):
             return self.error_value
 
 
-@dataclass
+@dataclass(repr=False)
 class Value(Header):
     """
     A value or list of values with an optional unit.
@@ -652,7 +651,7 @@ class Value(Header):
         return val.to(output_unit).magnitude
 
 
-@dataclass
+@dataclass(repr=False)
 class ComplexValue(Header):
     """
     A value or list of values with an optional unit.
@@ -692,7 +691,7 @@ class ComplexValue(Header):
         return val.to(output_unit).magnitude
 
 
-@dataclass
+@dataclass(repr=False)
 class ValueRange(Header):
     """
     A range or list of ranges with mins, maxs, and an optional unit.
@@ -731,7 +730,7 @@ class ValueRange(Header):
         return (vmin.to(output_unit).magnitude, vmax.to(output_unit).magnitude)
 
 
-@dataclass
+@dataclass(repr=False)
 class ValueVector(Header):
     """
     A vector or list of vectors with an optional unit.
@@ -769,7 +768,7 @@ class ValueVector(Header):
         return (vx.to(output_unit).magnitude, vy.to(output_unit).magnitude, vz.to(output_unit).magnitude)
 
 
-@dataclass
+@dataclass(repr=False)
 class AlternatingField(Header):
     """
     A physical field with regular variations as AC magnetic field.
@@ -780,7 +779,7 @@ class AlternatingField(Header):
     phase: Optional[Value] = None
 
 
-@dataclass
+@dataclass(repr=False)
 class Person(Header):
     """
     Information about a person, including name, affiliation(s), and contact
@@ -792,7 +791,7 @@ class Person(Header):
     contact: Optional[str] = field(default=None, metadata={"description": "Contact (email) address"})
 
 
-@dataclass
+@dataclass(repr=False)
 class Column(Header):
     """
     Information about a data column.
@@ -817,7 +816,7 @@ class Column(Header):
     yaml_representer = Header.yaml_representer_compact
 
 
-@dataclass
+@dataclass(repr=False)
 class ErrorColumn(Header):
     """
     Information about a data column.
@@ -872,7 +871,7 @@ class ErrorColumn(Header):
             return 1.0
 
 
-@dataclass
+@dataclass(repr=False)
 class ContentHash(Header):
     """
     A hash of some content, using standard algorithms
@@ -922,7 +921,7 @@ class ContentHash(Header):
         return self.digest == digest.hexdigest()
 
 
-@dataclass
+@dataclass(repr=False)
 class File(Header):
     """
     A file with file path and a last modified timestamp.

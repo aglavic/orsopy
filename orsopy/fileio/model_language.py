@@ -42,7 +42,7 @@ def find_closing(string, start, brackets="()"):
     return -1
 
 
-@dataclass
+@dataclass(repr=False)
 class SubStack(Header, SubStackType):
     repetitions: int = 1
     stack: Optional[str] = None
@@ -212,7 +212,7 @@ for T in SubStackType.__subclasses__():
     SUBSTACK_TYPE = Union[SUBSTACK_TYPE, T]
 
 
-@dataclass
+@dataclass(repr=False)
 class ItemChanger(Header):
     """
     Allows to define a simple change in SubStackType item by
@@ -224,7 +224,7 @@ class ItemChanger(Header):
     original_name = None
 
 
-@dataclass
+@dataclass(repr=False)
 class SampleModel(Header):
     stack: str
     origin: Optional[str] = None

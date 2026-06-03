@@ -10,7 +10,7 @@ from typing import List, Optional, Union
 from .base import Header, Person
 
 
-@dataclass
+@dataclass(repr=False)
 class Software(Header):
     """
     Software description.
@@ -27,7 +27,7 @@ class Software(Header):
     yaml_representer = Header.yaml_representer_compact
 
 
-@dataclass
+@dataclass(repr=False)
 class Reduction(Header):
     """
     A description of the reduction that has been performed.

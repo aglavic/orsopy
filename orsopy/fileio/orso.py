@@ -19,7 +19,7 @@ ORSO_DESIGNATE = (
 )
 
 
-@dataclass
+@dataclass(repr=False)
 class Orso(Header):
     """
     The Orso object collects the necessary metadata.
@@ -140,7 +140,7 @@ class Orso(Header):
         return out
 
 
-@dataclass
+@dataclass(repr=False)
 class OrsoDataset:
     """
     :param info: The header information for the reflectivity measurement

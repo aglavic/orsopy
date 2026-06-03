@@ -36,7 +36,7 @@ sample:
                 number_density: 0.3135
             DM:
                 formula: C26H54
-                number_density: 0.128
+                mass_density: 0.0779
         globals:
             default_solvent:  D2O
 

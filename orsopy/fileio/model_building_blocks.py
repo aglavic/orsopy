@@ -15,22 +15,26 @@ class SubStackType(ABC):
 
     @property
     @abstractmethod
-    def sub_stack_class(self) -> str: ...
+    def sub_stack_class(self) -> str:
+        ...
 
     @abstractmethod
-    def resolve_names(self, resolvable_items): ...
+    def resolve_names(self, resolvable_items):
+        ...
 
     @abstractmethod
-    def resolve_defaults(self, defaults: "ModelParameters"): ...
+    def resolve_defaults(self, defaults: "ModelParameters"):
+        ...
 
     @abstractmethod
-    def resolve_to_layers(self) -> List["Layer"]: ...
+    def resolve_to_layers(self) -> List["Layer"]:
+        ...
 
     def resolve_to_blocks(self) -> List[Union["Layer", "SubStackType"]]:
         return [self]
 
 
-@dataclass
+@dataclass(repr=False)
 class Material(Header):
     formula: Optional[str] = None
     mass_density: Optional[Union[float, Value]] = None
@@ -68,9 +72,21 @@ class Material(Header):
             elif not isinstance(self.magnetic_moment, Value):
                 self.magnetic_moment = Value(self.magnetic_moment, unit=defaults.magnetic_moment_unit)
 
+    def _number_from_mass_density(self):
+        """
+        Use chamical formula and mass density to define number density.
+        """
+        mass_density = self.mass_density.as_unit("g/cm^3")
+        from ..slddb.material import Material
+
+        material = Material(self.formula, dens=mass_density)
+        self.number_density = Value(magnitude=material.fu_dens * 1000.0, unit="1/nm^3")
+
     def generate_density(self):
         if self.sld is not None or self.mass_density is not None or self.number_density is not None:
             # this material already contains density information
+            if self.number_density is None and self.mass_density is not None:
+                self._number_from_mass_density()
             return
         if len(DENSITY_RESOLVERS) == 0:
             from ..utils.resolver_slddb import ResolverSLDDB
@@ -160,7 +176,7 @@ class Material(Header):
             return 0.0j
 
 
-@dataclass
+@dataclass(repr=False)
 class Composit(Header):
     composition: Dict[str, float]
 
@@ -190,25 +206,43 @@ class Composit(Header):
     def generate_density(self, xray_energy=None):
         """
         Create a material based on the composition attribute.
+
+        If all items define a formula, return radiation agnostic Material.
         """
         sld = 0.0
+        use_formula = True
         for key, value in self.composition.items():
             mi = self._composition_materials[key]
             mi.generate_density()
-            sldi = mi.get_sld(xray_energy=xray_energy)
-            sld += value * sldi
+            use_formula &= mi.formula is not None
+
         mix_str = ";".join([f"{value}x{key}" for key, value in self.composition.items()])
-        return Material(
-            sld=ComplexValue(real=sld.real, imag=sld.imag, unit="1/angstrom^2"),
-            comment=f"composition material: {mix_str}",
-        )
+
+        if use_formula:
+            reference_density = self._composition_materials[list(self.composition.keys())[0]].number_density
+            rd_unit = reference_density.unit
+            rd = reference_density.magnitude
+            FU = ""
+            for key, value in self.composition.items():
+                mi = self._composition_materials[key]
+                FU += f"({mi.formula}){mi.number_density.as_unit(rd_unit)/rd*value}"
+            return Material(formula=FU, number_density=reference_density, comment=f"composition material: {mix_str}")
+        else:
+            for key, value in self.composition.items():
+                mi = self._composition_materials[key]
+                sldi = mi.get_sld(xray_energy=xray_energy)
+                sld += value * sldi
+            return Material(
+                sld=ComplexValue(real=sld.real, imag=sld.imag, unit="1/angstrom^2"),
+                comment=f"composition material: {mix_str}",
+            )
 
     def get_sld(self, xray_energy=None):
         material = self.generate_density(xray_energy=xray_energy)
         return material.get_sld(xray_energy=xray_energy)
 
 
-@dataclass
+@dataclass(repr=False)
 class ModelParameters(Header):
     roughness: Optional[Value] = field(default_factory=lambda: Value(0.3, "nm"))
     length_unit: Optional[str] = "nm"
@@ -235,7 +269,7 @@ SPECIAL_MATERIALS = {
 CACHED_MATERIALS = {}
 
 
-@dataclass
+@dataclass(repr=False)
 class Layer(Header):
     thickness: Optional[Union[float, Value]] = None
     roughness: Optional[Union[float, Value]] = None

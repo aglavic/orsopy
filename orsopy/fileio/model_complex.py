@@ -190,20 +190,15 @@ class Leaflet(Header, SubStackType):
     def mixed_material(self, material: Material, solvent: Material, hydtration: float):
         return mix_hydrate_material(material, solvent, hydtration, self.coverage)
 
+    def resolve_to_blocks(self) -> List[Union["Layer", "SubStackType"]]:
+        # Make sure the block includes full material data
+        self.ensure_densities()
+        self.heads = self._materials[0]
+        self.tails = self._materials[1]
+        return [self]
+
     def resolve_to_layers(self) -> List[Layer]:
-        for material in [self._environment] + self._materials:
-            material.generate_density()
-            if material.number_density is None:
-                # need to generate number density from mass density and formula
-                formula = Formula(material.formula, strict=True)
-                fu_mass = 0.0
-                for element, number in formula.elements:
-                    if element.mass is None:
-                        raise ValueError(f"No mass known for element {element}")
-                    fu_mass += number * element.mass
-                material.number_density = Value(
-                    material.mass_density.as_unit("g/cm^3") / fu_mass / u2g * 1e21, unit="1/nm^3"
-                )
+        self.ensure_densities()
 
         d_head = Value(1.0 / (self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm")
         d_tail = Value(1.0 / (self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm")
@@ -217,6 +212,21 @@ class Leaflet(Header, SubStackType):
             return [head, tail]
         else:
             return [tail, head]
+
+    def ensure_densities(self):
+        for material in [self._environment] + self._materials:
+            material.generate_density()
+            if material.number_density is None:
+                # need to generate number density from mass density and formula
+                formula = Formula(material.formula, strict=True)
+                fu_mass = 0.0
+                for element, number in formula.elements:
+                    if element.mass is None:
+                        raise ValueError(f"No mass known for element {element}")
+                    fu_mass += number * element.mass
+                material.number_density = Value(
+                    material.mass_density.as_unit("g/cm^3") / fu_mass / u2g * 1e21, unit="1/nm^3"
+                )
 
 
 @dataclass
@@ -290,20 +300,15 @@ class Bilayer(Header, SubStackType):
     def mixed_material(self, material: Material, solvent: Material, hydtration: float):
         return mix_hydrate_material(material, solvent, hydtration, self.coverage)
 
+    def resolve_to_blocks(self) -> List[Union["Layer", "SubStackType"]]:
+        self.ensure_densities()
+        # Make sure the block includes full material data
+        self.inner = self._materials[1]
+        self.outer = self._materials[0]
+        return [self]
+
     def resolve_to_layers(self) -> List[Layer]:
-        for material in [self._environment] + self._materials:
-            material.generate_density()
-            if material.number_density is None:
-                # need to generate number density from mass density and formula
-                formula = Formula(material.formula, strict=True)
-                fu_mass = 0.0
-                for element, number in formula.elements:
-                    if element.mass is None:
-                        raise ValueError(f"No mass known for element {element}")
-                    fu_mass += number * element.mass
-                material.number_density = Value(
-                    material.mass_density.as_unit("g/cm^3") / fu_mass / u2g * 1e21, unit="1/nm^3"
-                )
+        self.ensure_densities()
 
         d_head = Value(1.0 / (self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm")
         d_tail = Value(1.0 / (self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm")
@@ -322,3 +327,18 @@ class Bilayer(Header, SubStackType):
         tail_2 = Layer(thickness=d_tail, material=m_tail_2, roughness=self.roughness)
         head_2 = Layer(thickness=d_head, material=m_head_2, roughness=self.roughness)
         return [head, tail, tail_2, head_2]
+
+    def ensure_densities(self):
+        for material in [self._environment] + self._materials:
+            material.generate_density()
+            if material.number_density is None:
+                # need to generate number density from mass density and formula
+                formula = Formula(material.formula, strict=True)
+                fu_mass = 0.0
+                for element, number in formula.elements:
+                    if element.mass is None:
+                        raise ValueError(f"No mass known for element {element}")
+                    fu_mass += number * element.mass
+                material.number_density = Value(
+                    material.mass_density.as_unit("g/cm^3") / fu_mass / u2g * 1e21, unit="1/nm^3"
+                )

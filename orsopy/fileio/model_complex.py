@@ -161,6 +161,13 @@ class LipidBase:
     def solvent(self):
         return self._materials[2]
 
+    known_lipids = {
+        "DMPC": {
+            "heads": Material(formula="C10H18O8NP", number_density=Value(3.135, unit="1/nm^3")),
+            "tails": Material(formula="C26H54", number_density=Value(1.2, unit="1/nm^3")),
+        }
+    }
+
 
 @dataclass(repr=False)
 class Leaflet(Header, LipidBase, SubStackType):
@@ -182,6 +189,19 @@ class Leaflet(Header, LipidBase, SubStackType):
     coverage: Optional[float] = 1.0
     roughness: Optional[Union[float, Value]] = None
     sub_stack_class: Literal["Leaflet"] = "Leaflet"
+
+    @classmethod
+    def resolve_name(cls, name):
+        kwds = {}
+        if name.startswith("r"):
+            name = name[1:]
+            kwds["heads_first"] = False
+        if name in cls.known_lipids:
+            data = cls.known_lipids[name]
+            kwds.update(data)
+            return cls.from_dict(kwds)
+        else:
+            raise ValueError(f"Unknown lipid name: {name}")
 
     def resolve_names(self, resolvable_items):
         self._materials = []
@@ -263,6 +283,25 @@ class Bilayer(Header, LipidBase, SubStackType):
     coverage: Optional[float] = 1.0
     roughness: Optional[Union[float, Value]] = None
     sub_stack_class: Literal["Bilayer"] = "Bilayer"
+
+    @classmethod
+    def resolve_name(cls, name):
+        kwds = {}
+        if name in cls.known_lipids:
+            data = cls.known_lipids[name]
+            for src, dest in [
+                ("heads", "outer"),
+                ("tails", "inner"),
+                ("apm", "apm"),
+                ("outer_hydration", "heads_hydration"),
+                ("inner_hydration", "tails_hydration"),
+                ("roughness", "roughness"),
+            ]:
+                if src in data:
+                    kwds[dest] = data[src]
+            return cls.from_dict(kwds)
+        else:
+            raise ValueError(f"Unknown lipid name: {name}")
 
     def resolve_names(self, resolvable_items):
         self._materials = []

@@ -1,12 +1,56 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Type, Union
 
 from ..utils.chemical_formula import Formula
 from ..utils.density_resolver import MaterialResolver
 from .base import ComplexValue, Header, Value
 
 DENSITY_RESOLVERS: List[MaterialResolver] = []
+
+
+class LateResolver:
+    """
+    Placeholder object for later resolved named SubStackType classes.
+    Stores the name and potential resolution information for later
+    evaluation, so no resolution is needed for SampleModel.resolve_stack call.
+    """
+
+    name: str
+    sub_stack_class: Type["SubStackType"]
+    _resolved_object: Optional["SubStackType"] = None
+
+    def __init__(self, name, sub_stack_class: Type["SubStackType"]):
+        self.name = name
+        self.sub_stack_class = sub_stack_class
+
+    def resolve_names(self, resolvable_items):
+        self.resolvable_items = resolvable_items
+
+    def resolve_defaults(self, defaults: "ModelParameters"):
+        self.defaults = defaults
+
+    def resolve_object(self):
+        self._resolved_object = self.sub_stack_class.resolve_name(self.name)
+        self._resolved_object.original_name = self.name
+        self._resolved_object.resolve_names(self.resolvable_items)
+        self._resolved_object.resolve_defaults(self.defaults)
+
+    def resolve_to_blocks(self) -> List[Union["Layer", "SubStackType"]]:
+        if self._resolved_object is None:
+            self.resolve_object()
+        return self._resolved_object.resolve_to_blocks()
+
+    def resolve_to_layers(self) -> List["Layer"]:
+        if self._resolved_object is None:
+            self.resolve_object()
+        return self._resolved_object.resolve_to_layers()
+
+    def __repr__(self):
+        if self._resolved_object is None:
+            return "LateResolver('" + self.sub_stack_class.__name__ + "{" + self.name + "}'" + ")"
+        else:
+            return "LateResolver(" + repr(self._resolved_object) + ")"
 
 
 class SubStackType(ABC):
@@ -32,6 +76,22 @@ class SubStackType(ABC):
 
     def resolve_to_blocks(self) -> List[Union["Layer", "SubStackType"]]:
         return [self]
+
+    @classmethod
+    def resolve_name(cls, name):
+        """
+        Actually perform resolution of object by name.
+        """
+        raise NotImplementedError(f"{cls.__name__} does not implement name based resolution")
+
+    @classmethod
+    def from_name(cls, name):
+        """
+        This is called if a SubStackType class shall be created from a name at a later stage.
+        Stores the name and potential parameters in a LateResolver object that is replaced
+        with the actual instance on resolve_to_blocks or resolve_to_layers calls.
+        """
+        return LateResolver(name, cls)
 
 
 @dataclass(repr=False)

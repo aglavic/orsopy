@@ -1,6 +1,6 @@
 sample:
     model:
-        stack: "Si | DMPC | Bilayer{outer: PC, inner: DM} | biDMPC | (lbl3) in H2O | H2O"
+        stack: "Si | DMPC | Bilayer{outer: PC, inner: DM} | biDMPC | (lbl3 | Bilayer{DMPC}) in H2O | Leaflet{rDMPC} | H2O"
         sub_stacks:
           DMPC:
               sub_stack_class: Leaflet

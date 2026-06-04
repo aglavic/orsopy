@@ -99,7 +99,13 @@ class SubStack(Header, SubStackType):
                         if T.sub_stack_class == class_name:
                             ssclass = T
                             break
-                    obj = ssclass.from_dict(yaml.load(stack[open_idx : close_idx + 1], Loader=yaml.FullLoader))
+                    class_data = stack[open_idx : close_idx + 1]
+                    if ":" in class_data:
+                        # data describes yaml dictionary of keywords for this class
+                        obj = ssclass.from_dict(yaml.load(class_data, Loader=yaml.FullLoader))
+                    else:
+                        # data describes the name of an object to be resolved later
+                        obj = ssclass.from_name(class_data[1:-1].strip())
                     try:
                         thickness = float(stack[close_idx + 1 : next_idx].strip())
                     except ValueError:
@@ -309,7 +315,13 @@ class SampleModel(Header):
                     if T.sub_stack_class == class_name:
                         ssclass = T
                         break
-                obj = ssclass.from_dict(yaml.load(stack[open_idx : close_idx + 1], Loader=yaml.FullLoader))
+                class_data = stack[open_idx : close_idx + 1]
+                if ":" in class_data:
+                    # data describes yaml dictionary of keywords for this class
+                    obj = ssclass.from_dict(yaml.load(class_data, Loader=yaml.FullLoader))
+                else:
+                    # data describes the name of an object to be resolved later
+                    obj = ssclass.from_name(class_data[1:-1].strip())
                 try:
                     thickness = float(stack[close_idx + 1 : next_idx].strip())
                 except ValueError:

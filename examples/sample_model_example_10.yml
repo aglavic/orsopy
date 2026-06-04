@@ -1,50 +1,8 @@
 sample:
     model:
-        stack: "Si | DMPC | Bilayer{outer: PC, inner: DM} | biDMPC | (lbl3 | Bilayer{DMPC}) in H2O | Leaflet{rDMPC} | H2O"
-        sub_stacks:
-          DMPC:
-              sub_stack_class: Leaflet
-              heads: PC
-              tails:
-                  composition:
-                      DM: 0.9
-                      PC: 0.1
-              heads_first: false
-          biDMPC:
-            sub_stack_class: Bilayer
-            outer: PC
-            inner:
-                composition:
-                    DM: 0.9
-                    PC: 0.1
-            apm: {magnitude: 0.8, unit: nm^2}
-            outer_hydration: 0.3
-            inner_hydration: 0.3
-            inner_hydration_2: 0.4
-            outer_hydration_2: 0.5
-          lbl3:
-            sub_stack_class: Bilayer
-            outer:
-                formula: C10H18O8NP
-                number_density: 3.135 # 1/nm^3
-            inner:
-                formula: C26H54
-                number_density: 1.28 # 1/nm^3
-            apm: 0.9 # nm^2
-            outer_hydration: 0.3
-            inner_hydration: 0.3
-            inner_hydration_2: 0.4
-            outer_hydration_2: 0.5
-            coverage: 0.75
-        materials:
-            PC:
-                formula: C10H18O8NP
-                number_density: 3.135
-            DM:
-                formula: C26H54
-                mass_density: 0.779
-        globals:
-            default_solvent:  D2O
+        stack: >
+            Si | Leaflet{DMPC} | Bilayer{d54-DMPC} | Bilayer{DMPG} | Bilayer{d54-DMPG} | Bilayer{POPC} 
+            | Bilayer{POPG} | Bilayer{POPS} | Bilayer{POPE} | Leaflet{rDMPC} | H2O
 
         # below is just used for orsopy testing and not part of this model
         test:

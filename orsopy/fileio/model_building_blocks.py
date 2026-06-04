@@ -23,6 +23,8 @@ class LateResolver:
     def __init__(self, name, sub_stack_class: Type["SubStackType"]):
         self.name = name
         self.sub_stack_class = sub_stack_class
+        if hasattr(sub_stack_class, "thickness"):
+            self.thickness = None
 
     def resolve_names(self, resolvable_items):
         self.resolvable_items = resolvable_items
@@ -33,6 +35,8 @@ class LateResolver:
     def resolve_object(self):
         self._resolved_object = self.sub_stack_class.resolve_name(self.name)
         self._resolved_object.original_name = self.name
+        if getattr(self._resolved_object, "thickness", "ignore") is None:
+            self._resolved_object.thickness = self.thickness
         self._resolved_object.resolve_names(self.resolvable_items)
         self._resolved_object.resolve_defaults(self.defaults)
 

@@ -163,9 +163,37 @@ class LipidBase:
 
     known_lipids = {
         "DMPC": {
-            "heads": Material(formula="C10H18O8NP", number_density=Value(3.135, unit="1/nm^3")),
-            "tails": Material(formula="C26H54", number_density=Value(1.2, unit="1/nm^3")),
-        }
+            "heads": Material(formula="C10H18O8NP", number_density=Value(1.0 / 0.319, unit="1/nm^3")),
+            "tails": Material(formula="C26H54", number_density=Value(1.0 / 0.782, unit="1/nm^3")),
+        },
+        "d54-DMPC": {
+            "heads": Material(formula="C10H18O8NP", number_density=Value(1.0 / 0.319, unit="1/nm^3")),
+            "tails": Material(formula="C26D54", number_density=Value(1.0 / 0.782, unit="1/nm^3")),
+        },
+        "DMPG": {
+            "heads": Material(formula="C8H12O10P1", number_density=Value(1.0 / 0.257, unit="1/nm^3")),
+            "tails": Material(formula="C26H54", number_density=Value(1.0 / 0.782, unit="1/nm^3")),
+        },
+        "d54-DMPG": {
+            "heads": Material(formula="C8H12O10P1", number_density=Value(1.0 / 0.257, unit="1/nm^3")),
+            "tails": Material(formula="C26D54", number_density=Value(1.0 / 0.782, unit="1/nm^3")),
+        },
+        "POPC": {
+            "heads": Material(formula="C10H18O8NP", number_density=Value(1.0 / 0.319, unit="1/nm^3")),
+            "tails": Material(formula="C32H64", number_density=Value(1.0 / 0.944, unit="1/nm^3")),
+        },
+        "POPG": {
+            "heads": Material(formula="C8H12O10P", number_density=Value(1.0 / 0.257, unit="1/nm^3")),
+            "tails": Material(formula="C32H64", number_density=Value(1.0 / 0.944, unit="1/nm^3")),
+        },
+        "POPS": {
+            "heads": Material(formula="C8H11O10NP", number_density=Value(1.0 / 0.244, unit="1/nm^3")),
+            "tails": Material(formula="C32H64", number_density=Value(1.0 / 0.944, unit="1/nm^3")),
+        },
+        "POPE": {
+            "heads": Material(formula="C7H12O8PN", number_density=Value(1.0 / 0.252, unit="1/nm^3")),
+            "tails": Material(formula="C32H64", number_density=Value(1.0 / 0.944, unit="1/nm^3")),
+        },
     }
 
 

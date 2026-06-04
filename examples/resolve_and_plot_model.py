@@ -23,8 +23,8 @@ from orsopy.fileio import model_complex, model_language
 q = linspace(0.001, 0.2, 200)
 
 
-def res_layer(layer: model_language.Layer):
-    m = SLD(layer.material.get_sld() * 1e6)
+def res_layer(layer: model_language.Layer, xray_energy=None):
+    m = SLD(layer.material.get_sld(xray_energy=xray_energy) * 1e6)
     return Slab(
         layer.thickness.as_unit("angstrom"),
         m,
@@ -33,17 +33,17 @@ def res_layer(layer: model_language.Layer):
     )
 
 
-def res_leaflet(leaflet: model_complex.Leaflet):
+def res_leaflet(leaflet: model_complex.Leaflet, xray_energy=None):
     apm = leaflet.apm.as_unit("angstrom^2")
     vm_heads = leaflet.heads.volume.as_unit("angstrom^3")
     vfrac_head = 1.0 - leaflet.heads_hydration
     vfrac_tail = 1.0 - leaflet.tails_hydration
-    b_heads = leaflet.heads.get_sld() * 1e6 / vm_heads
+    b_heads = leaflet.heads.get_sld(xray_energy=xray_energy) * 1e5 / vm_heads
     d_heads = vm_heads / apm / vfrac_head
     vm_tails = leaflet.tails.volume.as_unit("angstrom^3")
-    b_tails = leaflet.tails.get_sld() * 1e6 / vm_tails
+    b_tails = leaflet.tails.get_sld(xray_energy=xray_energy) * 1e5 / vm_tails
     d_tails = vm_tails / apm / vfrac_tail
-    solvent = leaflet.solvent.get_sld() * 1e6
+    solvent = leaflet.solvent.get_sld(xray_energy=xray_energy) * 1e6
     ll = LipidLeaflet(
         apm=apm,
         b_heads=b_heads,
@@ -62,17 +62,17 @@ def res_leaflet(leaflet: model_complex.Leaflet):
     return ll
 
 
-def res_bilayer(bilayer: model_complex.Bilayer):
+def res_bilayer(bilayer: model_complex.Bilayer, xray_energy=None):
     apm = bilayer.apm.as_unit("angstrom^2")
     vm_heads = bilayer.outer.volume.as_unit("angstrom^3")
     vfrac_head = 1.0 - bilayer.outer_hydration
     vfrac_tail = 1.0 - bilayer.inner_hydration
-    b_heads = bilayer.outer.get_sld() * 1e6 / vm_heads
+    b_heads = bilayer.outer.get_sld(xray_energy=xray_energy) * 1e5 / vm_heads
     d_heads = vm_heads / apm / vfrac_head
     vm_tails = bilayer.inner.volume.as_unit("angstrom^3")
-    b_tails = bilayer.inner.get_sld() * 1e6 / vm_tails
+    b_tails = bilayer.inner.get_sld(xray_energy=xray_energy) * 1e5 / vm_tails
     d_tails = vm_tails / apm / vfrac_tail
-    solvent = bilayer.solvent.get_sld() * 1e6
+    solvent = bilayer.solvent.get_sld(xray_energy=xray_energy) * 1e6
     ll = LipidLeaflet(
         apm=apm,
         b_heads=b_heads,
@@ -140,6 +140,7 @@ def main(txt=None):
     layers = sample.resolve_to_layers()
     print("\n".join([repr(li) for li in layers]))
 
+    # high-level resolution based on blocks
     structure = Structure()
     for block in blocks:
         if type(block) in refnx_resolvers:
@@ -150,10 +151,21 @@ def main(txt=None):
     print("\n", structure, "\n")
     model = ReflectModel(structure, bkg=0.0)
     structurex = Structure()
-    for lj in layers:
-        m = SLD(lj.material.get_sld(xray_energy="Cu") * 1e6)
-        structurex |= m(lj.thickness.as_unit("angstrom"), lj.roughness.as_unit("angstrom"))
+    for block in blocks:
+        if type(block) in refnx_resolvers:
+            structurex |= refnx_resolvers[type(block)](block, xray_energy="Cu")
+        else:
+            for li in block.resolve_to_layers():
+                structurex |= res_layer(li, xray_energy="Cu")
     modelx = ReflectModel(structurex, bkg=0.0)
+
+    # ORSOpy slab resolution
+    orsopy_neutron = Structure()
+    for li in layers:
+        orsopy_neutron |= res_layer(li)
+    orsopy_xray = Structure()
+    for li in layers:
+        orsopy_xray |= res_layer(li, xray_energy="Cu")
 
     pyplot.figure(figsize=(12, 5))
     pyplot.subplot(121)
@@ -164,8 +176,10 @@ def main(txt=None):
     pyplot.xlabel("q [Å$^{-1}$]")
     pyplot.ylabel("Neutron-reflectivity")
     pyplot.subplot(122)
-    pyplot.plot(*structure.sld_profile(), label="neutron")
-    pyplot.plot(*structurex.sld_profile(), label="x-ray (Cu)")
+    pyplot.plot(*structure.sld_profile(), label="neutron", color="C0")
+    pyplot.plot(*orsopy_neutron.sld_profile(), "--", label="", color="C0")
+    pyplot.plot(*structurex.sld_profile(), label="x-ray (Cu)", color="C1")
+    pyplot.plot(*orsopy_xray.sld_profile(), "--", label="", color="C1")
     pyplot.legend()
     pyplot.title(txt)
     pyplot.ylabel("SLD / $10^{-6} \\AA^{-2}$")

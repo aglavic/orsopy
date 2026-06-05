@@ -1,6 +1,8 @@
 """
 Python script to showcase the simple model language by resolving a stack string
-and plotting SLD and reflectivity for neutrons.
+and plotting SLD and reflectivity for neutrons and x-rays.
+The refnx model is first generate as a string and then evaluated to be able to export
+the model directly.
 
 Script requires matplotlib and refnx to run:
    pip install matplotlib refnx
@@ -16,105 +18,121 @@ import yaml
 
 from matplotlib import pyplot
 from numpy import linspace
-from refnx.reflect import SLD, LipidLeaflet, ReflectModel, Slab, Structure
 
 from orsopy.fileio import model_complex, model_language
 
+
+class RefNxResolver:
+    def __init__(self, sample: model_language.SampleModel):
+        self.sample = sample
+
+    def get_model(self, xray_energy=None, layers_only=False):
+        self.xray_energy = xray_energy
+
+        self.model_header()
+        if layers_only:
+            self.resolve_to_layers(self.sample)
+        else:
+            for block in self.sample.resolve_to_blocks():
+                block_resolver = getattr(self, "res" + type(block).__name__, self.resolve_to_layers)
+                block_resolver(block)
+        self.model_end()
+        return self.model
+
+    def model_header(self):
+        self.model = "from refnx.reflect import SLD, LipidLeaflet, ReflectModel, Slab, Structure\n\n"
+        self.model += "structure = Structure()\n\n"
+
+    def model_end(self):
+        self.model += "model = ReflectModel(structure, bkg=0.0)\n"
+
+    def resolve_to_layers(self, block: model_language.SubStackType):
+        for li in block.resolve_to_layers():
+            self.resLayer(li)
+
+    def resLayer(self, layer: model_language.Layer):
+        self.model += f"m = SLD({layer.material.get_sld(xray_energy=self.xray_energy) * 1e6})\n"
+        self.model += (
+            f"structure |= Slab({layer.thickness.as_unit('angstrom')}, m, "
+            f"{layer.roughness.as_unit('angstrom')}, "
+            f"name='{getattr(layer, 'original_name', '')}')\n\n"
+        )
+
+    def resLeaflet(self, leaflet: model_complex.Leaflet):
+        apm = leaflet.apm.as_unit("angstrom^2")
+        vm_heads = leaflet.heads.volume.as_unit("angstrom^3")
+        vfrac_head = 1.0 - leaflet.heads_hydration
+        vfrac_tail = 1.0 - leaflet.tails_hydration
+        b_heads = leaflet.heads.get_sld(xray_energy=self.xray_energy) * vm_heads
+        d_heads = vm_heads / apm / vfrac_head
+        vm_tails = leaflet.tails.volume.as_unit("angstrom^3")
+        b_tails = leaflet.tails.get_sld(xray_energy=self.xray_energy) * vm_tails
+        d_tails = vm_tails / apm / vfrac_tail
+        solvent = leaflet.solvent.get_sld(xray_energy=self.xray_energy) * 1e6
+        self.model += f"""structure |= LipidLeaflet(
+            apm={apm / leaflet.coverage},
+            b_heads={b_heads},
+            vm_heads={vm_heads},
+            thickness_heads={d_heads},
+            b_tails={b_tails},
+            vm_tails={vm_tails},
+            thickness_tails={d_tails},
+            rough_head_tail={leaflet.roughness.as_unit("angstrom")},
+            rough_preceding_mono={leaflet.roughness.as_unit("angstrom")},
+            reverse_monolayer={not leaflet.heads_first},
+            name='{'LL ' + getattr(leaflet, 'original_name', '')}',
+            head_solvent={solvent},
+            tail_solvent={solvent},
+        )\n\n"""
+
+    def resBilayer(self, bilayer: model_complex.Bilayer):
+        apm = bilayer.apm.as_unit("angstrom^2")
+        vm_heads = bilayer.outer.volume.as_unit("angstrom^3")
+        vfrac_head = 1.0 - bilayer.outer_hydration
+        vfrac_tail = 1.0 - bilayer.inner_hydration
+        b_heads = bilayer.outer.get_sld(xray_energy=self.xray_energy) * vm_heads
+        d_heads = vm_heads / apm / vfrac_head
+        vm_tails = bilayer.inner.volume.as_unit("angstrom^3")
+        b_tails = bilayer.inner.get_sld(xray_energy=self.xray_energy) * vm_tails
+        d_tails = vm_tails / apm / vfrac_tail
+        solvent = bilayer.solvent.get_sld(xray_energy=self.xray_energy) * 1e6
+        self.model += f"""structure |= LipidLeaflet(
+            apm={apm / bilayer.coverage},
+            b_heads={b_heads},
+            vm_heads={vm_heads},
+            thickness_heads={d_heads},
+            b_tails={b_tails},
+            vm_tails={vm_tails},
+            thickness_tails={d_tails},
+            rough_head_tail={bilayer.roughness.as_unit("angstrom")},
+            rough_preceding_mono={bilayer.roughness.as_unit("angstrom")},
+            reverse_monolayer=False,
+            name='{'LL ' + getattr(bilayer, 'original_name', '')}',
+            head_solvent={solvent},
+            tail_solvent={solvent},
+        )\n"""
+        vfrac_head = 1.0 - (bilayer.outer_hydration_2 or bilayer.outer_hydration)
+        vfrac_tail = 1.0 - (bilayer.inner_hydration_2 or bilayer.inner_hydration)
+        d_heads = vm_heads / apm / vfrac_head
+        d_tails = vm_tails / apm / vfrac_tail
+        self.model += f"""structure |= LipidLeaflet(
+            apm={apm / bilayer.coverage},
+            b_heads={b_heads},
+            vm_heads={vm_heads},
+            thickness_heads={d_heads},
+            b_tails={b_tails},
+            vm_tails={vm_tails},
+            thickness_tails={d_tails},
+            rough_head_tail={bilayer.roughness.as_unit("angstrom")},
+            rough_preceding_mono={bilayer.roughness.as_unit("angstrom")},
+            reverse_monolayer=True,
+            name='{'fLL ' + getattr(bilayer, 'original_name', '')}',
+            head_solvent={solvent},
+            tail_solvent={solvent},
+        )\n\n"""
+
+
 q = linspace(0.001, 0.2, 200)
-
-
-def res_layer(layer: model_language.Layer, xray_energy=None):
-    m = SLD(layer.material.get_sld(xray_energy=xray_energy) * 1e6)
-    return Slab(
-        layer.thickness.as_unit("angstrom"),
-        m,
-        layer.roughness.as_unit("angstrom"),
-        name=getattr(layer, "original_name", ""),
-    )
-
-
-def res_leaflet(leaflet: model_complex.Leaflet, xray_energy=None):
-    apm = leaflet.apm.as_unit("angstrom^2")
-    vm_heads = leaflet.heads.volume.as_unit("angstrom^3")
-    vfrac_head = 1.0 - leaflet.heads_hydration
-    vfrac_tail = 1.0 - leaflet.tails_hydration
-    b_heads = leaflet.heads.get_sld(xray_energy=xray_energy) * vm_heads
-    d_heads = vm_heads / apm / vfrac_head
-    vm_tails = leaflet.tails.volume.as_unit("angstrom^3")
-    b_tails = leaflet.tails.get_sld(xray_energy=xray_energy) * vm_tails
-    d_tails = vm_tails / apm / vfrac_tail
-    solvent = leaflet.solvent.get_sld(xray_energy=xray_energy) * 1e6
-    ll = LipidLeaflet(
-        apm=apm / leaflet.coverage,
-        b_heads=b_heads,
-        vm_heads=vm_heads,
-        thickness_heads=d_heads,
-        b_tails=b_tails,
-        vm_tails=vm_tails,
-        thickness_tails=d_tails,
-        rough_head_tail=leaflet.roughness.as_unit("angstrom"),
-        rough_preceding_mono=leaflet.roughness.as_unit("angstrom"),
-        reverse_monolayer=not leaflet.heads_first,
-        name="LL " + getattr(leaflet, "original_name", ""),
-        head_solvent=solvent,
-        tail_solvent=solvent,
-    )
-    return ll
-
-
-def res_bilayer(bilayer: model_complex.Bilayer, xray_energy=None):
-    apm = bilayer.apm.as_unit("angstrom^2")
-    vm_heads = bilayer.outer.volume.as_unit("angstrom^3")
-    vfrac_head = 1.0 - bilayer.outer_hydration
-    vfrac_tail = 1.0 - bilayer.inner_hydration
-    b_heads = bilayer.outer.get_sld(xray_energy=xray_energy) * vm_heads
-    d_heads = vm_heads / apm / vfrac_head
-    vm_tails = bilayer.inner.volume.as_unit("angstrom^3")
-    b_tails = bilayer.inner.get_sld(xray_energy=xray_energy) * vm_tails
-    d_tails = vm_tails / apm / vfrac_tail
-    solvent = bilayer.solvent.get_sld(xray_energy=xray_energy) * 1e6
-    ll = LipidLeaflet(
-        apm=apm / bilayer.coverage,
-        b_heads=b_heads,
-        vm_heads=vm_heads,
-        thickness_heads=d_heads,
-        b_tails=b_tails,
-        vm_tails=vm_tails,
-        thickness_tails=d_tails,
-        rough_head_tail=bilayer.roughness.as_unit("angstrom"),
-        rough_preceding_mono=bilayer.roughness.as_unit("angstrom"),
-        reverse_monolayer=False,
-        name="LL " + getattr(bilayer, "original_name", ""),
-        head_solvent=solvent,
-        tail_solvent=solvent,
-    )
-    vfrac_head = 1.0 - (bilayer.outer_hydration_2 or bilayer.outer_hydration)
-    vfrac_tail = 1.0 - (bilayer.inner_hydration_2 or bilayer.inner_hydration)
-    d_heads = vm_heads / apm / vfrac_head
-    d_tails = vm_tails / apm / vfrac_tail
-    rll = LipidLeaflet(
-        apm=apm / bilayer.coverage,
-        b_heads=b_heads,
-        vm_heads=vm_heads,
-        thickness_heads=d_heads,
-        b_tails=b_tails,
-        vm_tails=vm_tails,
-        thickness_tails=d_tails,
-        rough_head_tail=bilayer.roughness.as_unit("angstrom"),
-        rough_preceding_mono=bilayer.roughness.as_unit("angstrom"),
-        reverse_monolayer=True,
-        name="rLL " + getattr(bilayer, "original_name", ""),
-        head_solvent=solvent,
-        tail_solvent=solvent,
-    )
-    return ll | rll
-
-
-refnx_resolvers = {
-    model_language.Layer: res_layer,
-    model_complex.Leaflet: res_leaflet,
-    model_complex.Bilayer: res_bilayer,
-}
 
 
 def main(txt=None):
@@ -137,48 +155,47 @@ def main(txt=None):
     blocks = sample.resolve_to_blocks()
     print("\n".join([repr(ss) for ss in blocks]), "\n")
 
+    resolver = RefNxResolver(sample)
+    model_n = resolver.get_model()
+    model_x = resolver.get_model(xray_energy="Cu")
+
     layers = sample.resolve_to_layers()
     print("\n".join([repr(li) for li in layers]))
 
     # high-level resolution based on blocks
-    structure = Structure()
-    for block in blocks:
-        if type(block) in refnx_resolvers:
-            structure |= refnx_resolvers[type(block)](block)
-        else:
-            for li in block.resolve_to_layers():
-                structure |= res_layer(li)
-    print("\n", structure, "\n")
-    model = ReflectModel(structure, bkg=0.0)
-    structurex = Structure()
-    for block in blocks:
-        if type(block) in refnx_resolvers:
-            structurex |= refnx_resolvers[type(block)](block, xray_energy="Cu")
-        else:
-            for li in block.resolve_to_layers():
-                structurex |= res_layer(li, xray_energy="Cu")
-    modelx = ReflectModel(structurex, bkg=0.0)
+    resn = {}
+    exec(model_n, resn)
+    resx = {}
+    exec(model_x, resx)
+
+    print("####################### Neutron Model ##################")
+    print(model_n)
+
+    print("\n\n####################### X-ray Model ##################")
+    print(model_n)
 
     # ORSOpy slab resolution
-    orsopy_neutron = Structure()
-    for li in layers:
-        orsopy_neutron |= res_layer(li)
-    orsopy_xray = Structure()
-    for li in layers:
-        orsopy_xray |= res_layer(li, xray_energy="Cu")
+    model = resolver.get_model(layers_only=True)
+    res = {}
+    exec(model, res)
+    orsopy_neutron = res["structure"]
+    model = resolver.get_model(xray_energy="Cu", layers_only=True)
+    res = {}
+    exec(model, res)
+    orsopy_xray = res["structure"]
 
     pyplot.figure(figsize=(12, 5))
     pyplot.subplot(121)
-    pyplot.semilogy(q, model(q), label="neutron")
-    pyplot.semilogy(q, modelx(q), label="x-ray (Cu)")
+    pyplot.semilogy(q, resn["model"](q), label="neutron")
+    pyplot.semilogy(q, resx["model"](q), label="x-ray (Cu)")
     pyplot.legend()
     pyplot.title(txt)
     pyplot.xlabel("q [Å$^{-1}$]")
     pyplot.ylabel("Neutron-reflectivity")
     pyplot.subplot(122)
-    pyplot.plot(*structure.sld_profile(), label="neutron", color="C0")
+    pyplot.plot(*resn["structure"].sld_profile(), label="neutron", color="C0")
     pyplot.plot(*orsopy_neutron.sld_profile(), "--", lw=2, label="", color="C0")
-    pyplot.plot(*structurex.sld_profile(), label="x-ray (Cu)", color="C1")
+    pyplot.plot(*resx["structure"].sld_profile(), label="x-ray (Cu)", color="C1")
     pyplot.plot(*orsopy_xray.sld_profile(), "--", lw=2, label="", color="C1")
     pyplot.legend()
     pyplot.title(txt)

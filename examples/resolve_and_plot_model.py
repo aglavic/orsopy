@@ -38,14 +38,14 @@ def res_leaflet(leaflet: model_complex.Leaflet, xray_energy=None):
     vm_heads = leaflet.heads.volume.as_unit("angstrom^3")
     vfrac_head = 1.0 - leaflet.heads_hydration
     vfrac_tail = 1.0 - leaflet.tails_hydration
-    b_heads = leaflet.heads.get_sld(xray_energy=xray_energy) * 1e5 / vm_heads
+    b_heads = leaflet.heads.get_sld(xray_energy=xray_energy) * vm_heads
     d_heads = vm_heads / apm / vfrac_head
     vm_tails = leaflet.tails.volume.as_unit("angstrom^3")
-    b_tails = leaflet.tails.get_sld(xray_energy=xray_energy) * 1e5 / vm_tails
+    b_tails = leaflet.tails.get_sld(xray_energy=xray_energy) * vm_tails
     d_tails = vm_tails / apm / vfrac_tail
     solvent = leaflet.solvent.get_sld(xray_energy=xray_energy) * 1e6
     ll = LipidLeaflet(
-        apm=apm,
+        apm=apm / leaflet.coverage,
         b_heads=b_heads,
         vm_heads=vm_heads,
         thickness_heads=d_heads,
@@ -67,14 +67,14 @@ def res_bilayer(bilayer: model_complex.Bilayer, xray_energy=None):
     vm_heads = bilayer.outer.volume.as_unit("angstrom^3")
     vfrac_head = 1.0 - bilayer.outer_hydration
     vfrac_tail = 1.0 - bilayer.inner_hydration
-    b_heads = bilayer.outer.get_sld(xray_energy=xray_energy) * 1e5 / vm_heads
+    b_heads = bilayer.outer.get_sld(xray_energy=xray_energy) * vm_heads
     d_heads = vm_heads / apm / vfrac_head
     vm_tails = bilayer.inner.volume.as_unit("angstrom^3")
-    b_tails = bilayer.inner.get_sld(xray_energy=xray_energy) * 1e5 / vm_tails
+    b_tails = bilayer.inner.get_sld(xray_energy=xray_energy) * vm_tails
     d_tails = vm_tails / apm / vfrac_tail
     solvent = bilayer.solvent.get_sld(xray_energy=xray_energy) * 1e6
     ll = LipidLeaflet(
-        apm=apm,
+        apm=apm / bilayer.coverage,
         b_heads=b_heads,
         vm_heads=vm_heads,
         thickness_heads=d_heads,
@@ -93,7 +93,7 @@ def res_bilayer(bilayer: model_complex.Bilayer, xray_energy=None):
     d_heads = vm_heads / apm / vfrac_head
     d_tails = vm_tails / apm / vfrac_tail
     rll = LipidLeaflet(
-        apm=apm,
+        apm=apm / bilayer.coverage,
         b_heads=b_heads,
         vm_heads=vm_heads,
         thickness_heads=d_heads,
@@ -177,9 +177,9 @@ def main(txt=None):
     pyplot.ylabel("Neutron-reflectivity")
     pyplot.subplot(122)
     pyplot.plot(*structure.sld_profile(), label="neutron", color="C0")
-    pyplot.plot(*orsopy_neutron.sld_profile(), "--", label="", color="C0")
+    pyplot.plot(*orsopy_neutron.sld_profile(), "--", lw=2, label="", color="C0")
     pyplot.plot(*structurex.sld_profile(), label="x-ray (Cu)", color="C1")
-    pyplot.plot(*orsopy_xray.sld_profile(), "--", label="", color="C1")
+    pyplot.plot(*orsopy_xray.sld_profile(), "--", lw=2, label="", color="C1")
     pyplot.legend()
     pyplot.title(txt)
     pyplot.ylabel("SLD / $10^{-6} \\AA^{-2}$")

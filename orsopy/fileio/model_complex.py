@@ -251,12 +251,12 @@ class Leaflet(Header, LipidBase, SubStackType):
             self._materials.append(material)
         if "environment" in resolvable_items:
             environment = resolvable_items["environment"]
-            if not isinstance(self._environment, (Composit, Material)):
+            if not isinstance(environment, (Composit, Material)):
                 if environment in resolvable_items:
                     environment = resolvable_items[environment]
                 elif environment in SPECIAL_MATERIALS:
                     environment = SPECIAL_MATERIALS[environment]
-                elif isinstance(self._environment, str):
+                elif isinstance(environment, str):
                     environment = Material(formula=environment)
             self._materials.append(environment)
 
@@ -353,11 +353,11 @@ class Bilayer(Header, LipidBase, SubStackType):
             environment = resolvable_items["environment"]
             if not isinstance(environment, Material):
                 if environment in resolvable_items:
-                    environment = resolvable_items[self._environment]
+                    environment = resolvable_items[environment]
                 elif environment in SPECIAL_MATERIALS:
-                    environment = SPECIAL_MATERIALS[self._environment]
-                elif isinstance(self._environment, str):
-                    environment = Material(formula=self._environment)
+                    environment = SPECIAL_MATERIALS[environment]
+                elif isinstance(environment, str):
+                    environment = Material(formula=environment)
             self._materials.append(environment)
 
     def resolve_to_blocks(self) -> List[Union["Layer", "SubStackType"]]:

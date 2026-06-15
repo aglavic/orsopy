@@ -333,6 +333,10 @@ class Bilayer(Header, LipidBase, SubStackType):
     def solvent(self):
         return self._materials[4]
 
+    @property
+    def is_symmetric(self):
+        return self.hydration_2 is None and self.heads_2 is None and self.tails_2 is None
+
     def resolve_names(self, resolvable_items):
         self._materials = []
         for i, mi in enumerate((self.heads, self.tails, self.tails_2, self.heads_2)):
@@ -369,8 +373,10 @@ class Bilayer(Header, LipidBase, SubStackType):
         # Make sure the block includes full material data
         self.heads = self._materials[0]
         self.tails = self._materials[1]
-        self.tails_2 = self._materials[2]
-        self.heads_2 = self._materials[3]
+        if self.tails_2 is not None:
+            self.tails_2 = self._materials[2]
+        if self.heads_2 is not None:
+            self.heads_2 = self._materials[3]
         return [self]
 
     def resolve_to_layers(self) -> List[Layer]:

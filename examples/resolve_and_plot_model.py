@@ -110,7 +110,11 @@ class RefNxResolver:
             tail_solvent={solvent},
         )\n"""
         vfrac = 1.0 - (bilayer.hydration_2 or bilayer.hydration)
+        if bilayer.heads_2 is not None:
+            b_heads = bilayer.heads_2.get_sld(xray_energy=self.xray_energy) * vm_heads
         d_heads = vm_heads / apm / vfrac
+        if bilayer.tails_2 is not None:
+            b_tails = bilayer.tails_2.get_sld(xray_energy=self.xray_energy) * vm_tails
         d_tails = vm_tails / apm / vfrac
         self.model += f"""structure |= LipidLeaflet(
             apm={apm / bilayer.coverage},

@@ -1,6 +1,6 @@
 sample:
     model:
-        stack: "Si | DMPC | Bilayer{outer: PC, inner: DM} | biDMPC | (lbl3 | Bilayer{DMPC}) in H2O | Leaflet{rDMPC} | H2O"
+        stack: "Si | DMPC | Bilayer{heads: PC, tails: DM} | biDMPC | (lbl3 | Bilayer{DMPC}) in H2O | Leaflet{rDMPC} | H2O"
         sub_stacks:
           DMPC:
               sub_stack_class: Leaflet
@@ -12,29 +12,25 @@ sample:
               heads_first: false
           biDMPC:
             sub_stack_class: Bilayer
-            outer: PC
-            inner:
+            heads: PC
+            tails:
                 composition:
                     DM: 0.9
                     PC: 0.1
             apm: {magnitude: 0.8, unit: nm^2}
-            outer_hydration: 0.3
-            inner_hydration: 0.3
-            inner_hydration_2: 0.4
-            outer_hydration_2: 0.5
+            hydration: 0.3
+            hydration_2: 0.4
           lbl3:
             sub_stack_class: Bilayer
-            outer:
+            heads:
                 formula: C10H18O8NP
                 number_density: 3.135 # 1/nm^3
-            inner:
+            tails:
                 formula: C26H54
                 number_density: 1.28 # 1/nm^3
             apm: 0.9 # nm^2
-            outer_hydration: 0.3
-            inner_hydration: 0.3
-            inner_hydration_2: 0.4
-            outer_hydration_2: 0.5
+            hydration: 0.3
+            hydration_2: 0.4
             coverage: 0.75
         materials:
             PC:

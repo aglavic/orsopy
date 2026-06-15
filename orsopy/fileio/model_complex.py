@@ -212,8 +212,7 @@ class Leaflet(Header, LipidBase, SubStackType):
     tails: Union[Composit, Material, str]
     heads_first: Optional[bool] = True
     apm: Optional[Union[float, Value]] = field(default_factory=lambda: Value(0.7, unit="nm^2"))
-    heads_hydration: Optional[float] = 0.3
-    tails_hydration: Optional[float] = 0.3
+    hydration: Optional[float] = 0.3
     coverage: Optional[float] = 1.0
     roughness: Optional[Union[float, Value]] = None
     sub_stack_class: Literal["Leaflet"] = "Leaflet"
@@ -270,18 +269,17 @@ class Leaflet(Header, LipidBase, SubStackType):
     def resolve_to_layers(self) -> List[Layer]:
         self.ensure_densities()
 
-        Vf_head = 1.0 - self.heads_hydration
-        Vf_tail = 1.0 - self.tails_hydration
+        Vf = 1.0 - self.hydration
 
         d_head = Value(
-            1.0 / (Vf_head * self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+            1.0 / (Vf * self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
         )
         d_tail = Value(
-            1.0 / (Vf_tail * self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+            1.0 / (Vf * self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
         )
 
-        m_head = self.mixed_material(self._materials[0], self._materials[2], self.heads_hydration)
-        m_tail = self.mixed_material(self._materials[1], self._materials[2], self.tails_hydration)
+        m_head = self.mixed_material(self._materials[0], self._materials[2], self.hydration)
+        m_tail = self.mixed_material(self._materials[1], self._materials[2], self.hydration)
 
         head = Layer(thickness=d_head, material=m_head, roughness=self.roughness)
         tail = Layer(thickness=d_tail, material=m_tail, roughness=self.roughness)
@@ -294,20 +292,21 @@ class Leaflet(Header, LipidBase, SubStackType):
 @dataclass(repr=False)
 class Bilayer(Header, LipidBase, SubStackType):
     """
-    Building block corresponding to a bilayer of lipids with outer (heads) and inner (tails)
-    molecule definition. The bilayer is calculated from molecular volume, area per molecule (apm) and
+    Building block corresponding to a bilayer of lipids with heads and tails molecule definition,
+    optinallly with different lipids for the second Leaflet.
+    The bilayer is calculated from molecular volume, area per molecule (apm) and
     the level of hydration.
     The solvent used is either the environment set by a SubStack above or the default_solvent attribute
     of the ModelParameters.
     """
 
-    outer: Union[Composit, Material, str]
-    inner: Union[Composit, Material, str]
+    heads: Union[Composit, Material, str]
+    tails: Union[Composit, Material, str]
     apm: Optional[Union[float, Value]] = field(default_factory=lambda: Value(0.7, unit="nm^2"))
-    outer_hydration: Optional[float] = 0.3
-    inner_hydration: Optional[float] = 0.3
-    outer_hydration_2: Optional[float] = None
-    inner_hydration_2: Optional[float] = None
+    hydration: Optional[float] = 0.3
+    heads_2: Optional[Union[Composit, Material, str]] = None
+    tails_2: Optional[Union[Composit, Material, str]] = None
+    hydration_2: Optional[float] = None
     coverage: Optional[float] = 1.0
     roughness: Optional[Union[float, Value]] = None
     sub_stack_class: Literal["Bilayer"] = "Bilayer"
@@ -318,11 +317,10 @@ class Bilayer(Header, LipidBase, SubStackType):
         if name in cls.known_lipids:
             data = cls.known_lipids[name]
             for src, dest in [
-                ("heads", "outer"),
-                ("tails", "inner"),
+                ("heads", "heads"),
+                ("tails", "tails"),
                 ("apm", "apm"),
-                ("outer_hydration", "heads_hydration"),
-                ("inner_hydration", "tails_hydration"),
+                ("hydration", "hydration"),
                 ("roughness", "roughness"),
             ]:
                 if src in data:
@@ -331,10 +329,16 @@ class Bilayer(Header, LipidBase, SubStackType):
         else:
             raise ValueError(f"Unknown lipid name: {name}")
 
+    @property
+    def solvent(self):
+        return self._materials[4]
+
     def resolve_names(self, resolvable_items):
         self._materials = []
-        for i, mi in enumerate((self.outer, self.inner)):
-            if isinstance(mi, Material):
+        for i, mi in enumerate((self.heads, self.tails, self.tails_2, self.heads_2)):
+            if i > 1 and mi is None:
+                material = self._materials[[0, 0, 1, 0][i]]  # map self.heads/self.tails to self.tails_2/self.heads_2
+            elif isinstance(mi, Material):
                 material = mi
             elif isinstance(mi, Composit):
                 mi.resolve_names(resolvable_items)
@@ -363,38 +367,34 @@ class Bilayer(Header, LipidBase, SubStackType):
     def resolve_to_blocks(self) -> List[Union["Layer", "SubStackType"]]:
         self.ensure_densities()
         # Make sure the block includes full material data
-        self.inner = self._materials[1]
-        self.outer = self._materials[0]
+        self.heads = self._materials[0]
+        self.tails = self._materials[1]
+        self.tails_2 = self._materials[2]
+        self.heads_2 = self._materials[3]
         return [self]
 
     def resolve_to_layers(self) -> List[Layer]:
         self.ensure_densities()
 
-        Vf_head_1 = 1.0 - self.outer_hydration
-        Vf_tail_1 = 1.0 - self.inner_hydration
-        Vf_head_2 = 1.0 - (self.outer_hydration_2 or self.outer_hydration)
-        Vf_tail_2 = 1.0 - (self.inner_hydration_2 or self.inner_hydration)
+        Vf_1 = 1.0 - self.hydration
+        Vf_2 = 1.0 - (self.hydration_2 or self.hydration)
         d_head_1 = Value(
-            1.0 / (Vf_head_1 * self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+            1.0 / (Vf_1 * self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
         )
         d_head_2 = Value(
-            1.0 / (Vf_head_2 * self._materials[0].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+            1.0 / (Vf_2 * self._materials[3].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
         )
         d_tail_1 = Value(
-            1.0 / (Vf_tail_1 * self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+            1.0 / (Vf_1 * self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
         )
         d_tail_2 = Value(
-            1.0 / (Vf_tail_2 * self._materials[1].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
+            1.0 / (Vf_2 * self._materials[2].number_density.as_unit("1/nm^3") * self.apm.as_unit("nm^2")), "nm"
         )
 
-        m_head_1 = self.mixed_material(self._materials[0], self._materials[2], self.outer_hydration)
-        m_head_2 = self.mixed_material(
-            self._materials[0], self._materials[2], self.outer_hydration_2 or self.outer_hydration
-        )
-        m_tail_1 = self.mixed_material(self._materials[1], self._materials[2], self.inner_hydration)
-        m_tail_2 = self.mixed_material(
-            self._materials[1], self._materials[2], self.inner_hydration_2 or self.inner_hydration
-        )
+        m_head_1 = self.mixed_material(self._materials[0], self._materials[4], self.hydration)
+        m_head_2 = self.mixed_material(self._materials[3], self._materials[4], self.hydration_2 or self.hydration)
+        m_tail_1 = self.mixed_material(self._materials[1], self._materials[4], self.hydration)
+        m_tail_2 = self.mixed_material(self._materials[2], self._materials[4], self.hydration_2 or self.hydration)
 
         head = Layer(thickness=d_head_1, material=m_head_1, roughness=self.roughness)
         tail = Layer(thickness=d_tail_1, material=m_tail_1, roughness=self.roughness)

@@ -61,13 +61,12 @@ class RefNxResolver:
     def resLeaflet(self, leaflet: model_complex.Leaflet):
         apm = leaflet.apm.as_unit("angstrom^2")
         vm_heads = leaflet.heads.volume.as_unit("angstrom^3")
-        vfrac_head = 1.0 - leaflet.heads_hydration
-        vfrac_tail = 1.0 - leaflet.tails_hydration
+        vfrac = 1.0 - leaflet.hydration
         b_heads = leaflet.heads.get_sld(xray_energy=self.xray_energy) * vm_heads
-        d_heads = vm_heads / apm / vfrac_head
+        d_heads = vm_heads / apm / vfrac
         vm_tails = leaflet.tails.volume.as_unit("angstrom^3")
         b_tails = leaflet.tails.get_sld(xray_energy=self.xray_energy) * vm_tails
-        d_tails = vm_tails / apm / vfrac_tail
+        d_tails = vm_tails / apm / vfrac
         solvent = leaflet.solvent.get_sld(xray_energy=self.xray_energy) * 1e6
         self.model += f"""structure |= LipidLeaflet(
             apm={apm / leaflet.coverage},
@@ -87,14 +86,13 @@ class RefNxResolver:
 
     def resBilayer(self, bilayer: model_complex.Bilayer):
         apm = bilayer.apm.as_unit("angstrom^2")
-        vm_heads = bilayer.outer.volume.as_unit("angstrom^3")
-        vfrac_head = 1.0 - bilayer.outer_hydration
-        vfrac_tail = 1.0 - bilayer.inner_hydration
-        b_heads = bilayer.outer.get_sld(xray_energy=self.xray_energy) * vm_heads
-        d_heads = vm_heads / apm / vfrac_head
-        vm_tails = bilayer.inner.volume.as_unit("angstrom^3")
-        b_tails = bilayer.inner.get_sld(xray_energy=self.xray_energy) * vm_tails
-        d_tails = vm_tails / apm / vfrac_tail
+        vm_heads = bilayer.heads.volume.as_unit("angstrom^3")
+        vfrac = 1.0 - bilayer.hydration
+        b_heads = bilayer.heads.get_sld(xray_energy=self.xray_energy) * vm_heads
+        d_heads = vm_heads / apm / vfrac
+        vm_tails = bilayer.tails.volume.as_unit("angstrom^3")
+        b_tails = bilayer.tails.get_sld(xray_energy=self.xray_energy) * vm_tails
+        d_tails = vm_tails / apm / vfrac
         solvent = bilayer.solvent.get_sld(xray_energy=self.xray_energy) * 1e6
         self.model += f"""structure |= LipidLeaflet(
             apm={apm / bilayer.coverage},
@@ -111,10 +109,9 @@ class RefNxResolver:
             head_solvent={solvent},
             tail_solvent={solvent},
         )\n"""
-        vfrac_head = 1.0 - (bilayer.outer_hydration_2 or bilayer.outer_hydration)
-        vfrac_tail = 1.0 - (bilayer.inner_hydration_2 or bilayer.inner_hydration)
-        d_heads = vm_heads / apm / vfrac_head
-        d_tails = vm_tails / apm / vfrac_tail
+        vfrac = 1.0 - (bilayer.hydration_2 or bilayer.hydration)
+        d_heads = vm_heads / apm / vfrac
+        d_tails = vm_tails / apm / vfrac
         self.model += f"""structure |= LipidLeaflet(
             apm={apm / bilayer.coverage},
             b_heads={b_heads},

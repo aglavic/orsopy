@@ -326,6 +326,8 @@ def load_nexus(fname: Union[str, BinaryIO]) -> List[OrsoDataset]:
 def save_nexus(datasets: List[OrsoDataset], fname: Union[str, BinaryIO], comment: Optional[str] = None) -> BinaryIO:
     import h5py
 
+    from .nexus_mappings import NXMAPPINGS
+
     h5py.get_config().track_order = True
 
     for idx, dataset in enumerate(datasets):
@@ -352,8 +354,11 @@ def save_nexus(datasets: List[OrsoDataset], fname: Union[str, BinaryIO], comment
             entry.attrs["NX_class"] = "NXentry"
             entry.attrs["default"] = "plottable_data"
             info.to_nexus(root=entry, name="info")
+            entry['info'].attrs["NX_class"] = "NXcollection"
             data_group = entry.create_group("data")
             data_group.attrs["sequence"] = 1
+            data_group.attrs["NX_class"] = "NXcollection"
+            # plottable_data is needed to use the NeXus confirm column naming for errors
             plottable_data_group = entry.create_group("plottable_data", track_order=True)
             plottable_data_group.attrs["NX_class"] = "NXdata"
             plottable_data_group.attrs["sequence"] = 1
@@ -377,3 +382,5 @@ def save_nexus(datasets: List[OrsoDataset], fname: Union[str, BinaryIO], comment
                         col_data.attrs["units"] = column.unit
 
                 plottable_data_group[nexus_colname] = col_data
+            for m in NXMAPPINGS:
+                m(entry)

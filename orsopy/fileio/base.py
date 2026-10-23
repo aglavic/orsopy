@@ -479,7 +479,7 @@ class Header:
                 if any(isinstance(t_value, t) for t in (str, float, int, bool, np.ndarray)):
                     group.create_dataset(child_name, data=t_value)
                 elif t_value is None:
-                    group.create_dataset(child_name, dtype="f")
+                    group.create_dataset(child_name, data=np.nan, dtype="f")
                 elif isinstance(t_value, dict):
                     dset = group.create_dataset(child_name, data=json.dumps(t_value, default=lambda o: o.__dict__))
                     dset.attrs["mimetype"] = JSON_MIMETYPE
@@ -650,6 +650,12 @@ class Value(Header):
 
         val = self.magnitude * unit_registry(self.unit)
         return val.to(output_unit).magnitude
+
+    def to_nexus(self, root=None, name=None):
+        # add units attribute to magnitude
+        super().to_nexus(root, name)
+        ds = root[name]
+        ds['magnitude'].attrs["units"] = self.unit or ""
 
 
 @dataclass

@@ -3,7 +3,12 @@ This module contains mappings from standard ORSO fields to NeXus hierarchy that 
 implemented as links to the orso hdf group.
 """
 
-from typing import Dict, List, Protocol
+from typing import List
+
+try:
+    from typing import Protocol
+except ImportError:
+    Protocol = object
 
 import h5py
 

@@ -277,9 +277,6 @@ def _from_nexus_group(group):
     else:
         dct = dict()
         for name, value in group.items():
-            if value.attrs.get("NX_class", None) == "NXdata":
-                # remove NXdata folder, which exists only for NeXus plotting
-                continue
             dct[name] = _get_nexus_item(value)
 
         ORSO_class = group.attrs.get("ORSO_class", None)
@@ -316,13 +313,25 @@ def _get_nexus_item(value):
             return v
 
 
+def _load_nexus_dataset(group):
+    """
+    Load only ORSO info data from NeXus file, ignore any links.
+    """
+    data = np.array(_get_nexus_item(group["data"]), dtype=float).T
+    output = OrsoDataset(
+        info=_get_nexus_item(group["info"]),
+        data=data,
+    )
+    return output
+
+
 def load_nexus(fname: Union[str, BinaryIO]) -> List[OrsoDataset]:
     import h5py
 
     f = h5py.File(fname, "r")
     # Use '/' because order is not tracked on the File object, but is on the '/' group!
     root = f["/"]
-    return [_from_nexus_group(g) for g in root.values() if g.attrs.get("ORSO_class", None) == "OrsoDataset"]
+    return [_load_nexus_dataset(g) for g in root.values() if g.attrs.get("ORSO_class", None) == "OrsoDataset"]
 
 
 def to_nx_name(string: str):
@@ -358,36 +367,29 @@ def save_nexus(datasets: List[OrsoDataset], fname: Union[str, BinaryIO], comment
             entry.attrs["ORSO_class"] = "OrsoDataset"
             entry.attrs["ORSO_VERSION"] = ORSO_VERSION
             entry.attrs["NX_class"] = "NXentry"
-            entry.attrs["default"] = "plottable_data"
+            entry.attrs["default"] = "data"
             info.to_nexus(root=entry, name="info")
             entry["info"].attrs["NX_class"] = "NXcollection"
             data_group = entry.create_group("data")
             data_group.attrs["sequence"] = 1
-            data_group.attrs["NX_class"] = "NXcollection"
-            # plottable_data is needed to use the NeXus confirm column naming for errors
-            plottable_data_group = entry.create_group("plottable_data", track_order=True)
-            plottable_data_group.attrs["NX_class"] = "NXdata"
-            plottable_data_group.attrs["sequence"] = 1
-            plottable_data_group.attrs["axes"] = [info.columns[0].name]
-            plottable_data_group.attrs["signal"] = info.columns[1].name
-            plottable_data_group.attrs[f"{info.columns[0].name}_indices"] = [0]
+            data_group.attrs["NX_class"] = "NXdata"
+            data_group.attrs["axes"] = [info.columns[0].name]
+            data_group.attrs["signal"] = info.columns[1].name
+            data_group.attrs[f"{info.columns[0].name}_indices"] = [0]
             for column_index, column in enumerate(info.columns):
                 # assume that dataset.data has dimension == ncolumns along first dimension
                 # (note that this is not how data would be loaded from e.g. load_orso, which is row-first)
-                col_data = data_group.create_dataset(column.name, data=dsi.data[:, column_index])
+                nexus_colname = to_nx_name(column.name)
+                if isinstance(column, ErrorColumn):
+                    nexus_colname = to_nx_name(column.error_of) + "_errors"
+                col_data = data_group.create_dataset(nexus_colname, data=dsi.data[:, column_index])
                 col_data.attrs["sequence_index"] = column_index
                 col_data.attrs["target"] = col_data.name
                 physical_quantity = getattr(column, "physical_quantity", None)
                 if physical_quantity is not None:
                     col_data.attrs["physical_quantity"] = physical_quantity
-                if isinstance(column, ErrorColumn):
-                    nexus_colname = column.error_of + "_errors"
-                else:
-                    nexus_colname = column.name
-                    if column.unit is not None:
-                        col_data.attrs["units"] = column.unit
-
-                plottable_data_group[nexus_colname] = col_data
+                if not isinstance(column, ErrorColumn) and column.unit is not None:
+                    col_data.attrs["units"] = column.unit
 
             entry.create_dataset("program_name", data="orsopy")
             for m in NXMAPPINGS:

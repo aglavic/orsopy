@@ -433,7 +433,7 @@ class Header:
         if any(isinstance(t_value, t) for t in (str, float, int, bool, np.ndarray)):
             dset = group.create_dataset(child_name, data=t_value)
         elif t_value is None:
-            dset = group.create_dataset(child_name, data=np.nan, dtype="f")
+            dset = group.create_dataset(child_name, dtype="f")
         elif isinstance(t_value, dict):
             dset = group.create_group(child_name)
             for key, item in t_value.items():

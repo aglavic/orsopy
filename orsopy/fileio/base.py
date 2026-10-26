@@ -427,6 +427,25 @@ class Header:
         output = self._to_object_dict()
         return dumper.represent_mapping(dumper.DEFAULT_MAPPING_TAG, output, flow_style=True)
 
+    @staticmethod
+    def _item_to_nexus(group, child_name, value):
+        t_value = nexus_value_converter(value)
+        if any(isinstance(t_value, t) for t in (str, float, int, bool, np.ndarray)):
+            dset = group.create_dataset(child_name, data=t_value)
+        elif t_value is None:
+            dset = group.create_dataset(child_name, data=np.nan, dtype="f")
+        elif isinstance(t_value, dict):
+            dset = group.create_group(child_name)
+            for key, item in t_value.items():
+                if isinstance(item, Header):
+                    item.to_nexus(root=dset, name=key)
+                else:
+                    Header._item_to_nexus(dset, key, item)
+        else:
+            dset = None
+            warnings.warn(f"unserializable attribute found: {child_name} = {t_value}")
+        return dset
+
     def to_nexus(self, root=None, name=None):
         """
         Produces an HDF5 representation of the Header object, removing
@@ -452,39 +471,17 @@ class Header:
                 child_group.attrs["sequence"] = 1
                 for index, item in enumerate(value):
                     # use the 'name' attribute of children if it exists, else index:
-                    sub_name = getattr(item, "name", str(index))
+                    sub_name = getattr(item, "name", f"item_{index}")
                     if isinstance(item, Header):
                         item_out = item.to_nexus(root=child_group, name=sub_name)
                     else:
                         t_value = nexus_value_converter(item)
-                        if any(isinstance(t_value, t) for t in (str, float, int, bool, np.ndarray)):
-                            item_out = child_group.create_dataset(sub_name, data=t_value)
-                        elif t_value is None:
-                            # special handling for null datasets: no data
-                            item_out = child_group.create_dataset(sub_name, dtype="f")
-                        elif isinstance(t_value, dict):
-                            item_out = child_group.create_dataset(
-                                sub_name, data=json.dumps(t_value, default=lambda o: o.__dict__)
-                            )
-                            item_out.attrs["mimetype"] = JSON_MIMETYPE
-                        else:
-                            # raise ValueError(f"unserializable attribute found: {child_name}[{index}] = {t_value}")
-                            warnings.warn(f"unserializable attribute found: {child_name}[{index}] = {t_value}")
-                            continue
+                        item_out = Header._item_to_nexus(child_group, sub_name, t_value)
                     item_out.attrs["sequence_index"] = index
             else:
                 # here _todict converts objects that aren't derived from Header
                 # and therefore don't have to_dict methods.
-                t_value = nexus_value_converter(value)
-                if any(isinstance(t_value, t) for t in (str, float, int, bool, np.ndarray)):
-                    group.create_dataset(child_name, data=t_value)
-                elif t_value is None:
-                    group.create_dataset(child_name, data=np.nan, dtype="f")
-                elif isinstance(t_value, dict):
-                    dset = group.create_dataset(child_name, data=json.dumps(t_value, default=lambda o: o.__dict__))
-                    dset.attrs["mimetype"] = JSON_MIMETYPE
-                else:
-                    warnings.warn(f"unserializable attribute found: {child_name} = {t_value}")
+                Header._item_to_nexus(group, child_name, value)
         return group
 
     @staticmethod
@@ -655,7 +652,7 @@ class Value(Header):
         # add units attribute to magnitude
         super().to_nexus(root, name)
         ds = root[name]
-        ds['magnitude'].attrs["units"] = self.unit or ""
+        ds["magnitude"].attrs["units"] = self.unit or ""
 
 
 @dataclass
@@ -685,10 +682,7 @@ class ComplexValue(Header):
         """
         Returns the complex value as converted to the given unit.
         """
-        if self.imag is None:
-            value = self.real + 0j
-        else:
-            value = self.real + 1j * self.imag
+        value = self.real + 1j * (self.imag or 0.0)
         if output_unit == self.unit:
             return value
 
@@ -696,6 +690,13 @@ class ComplexValue(Header):
 
         val = value * unit_registry(self.unit)
         return val.to(output_unit).magnitude
+
+    def to_nexus(self, root=None, name=None):
+        # add combined complex value and units attribute
+        super().to_nexus(root, name)
+        ds = root[name]
+        ds.create_dataset("_complex_magnitude", data=self.real + 1j * (self.imag or 0.0))
+        ds["_complex_magnitude"].attrs["units"] = self.unit or ""
 
 
 @dataclass
@@ -735,6 +736,17 @@ class ValueRange(Header):
         vmin = self.min * unit_registry(self.unit)
         vmax = self.max * unit_registry(self.unit)
         return (vmin.to(output_unit).magnitude, vmax.to(output_unit).magnitude)
+
+    def to_nexus(self, root=None, name=None):
+        # add combined complex value and units attribute
+        super().to_nexus(root, name)
+        ds = root[name]
+        ds["min"].attrs["units"] = self.unit or ""
+        ds["max"].attrs["units"] = self.unit or ""
+        if self.individual_magnitudes is not None:
+            ds["individual_magnitudes"].attrs["units"] = self.unit or ""
+        ds.create_dataset("_mean", data=(self.min + self.max) / 2.0)
+        ds["_mean"].attrs["units"] = self.unit or ""
 
 
 @dataclass

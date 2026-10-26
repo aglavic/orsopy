@@ -2,6 +2,8 @@
 Implementation of the top level class for the ORSO header.
 """
 
+import re
+
 from dataclasses import dataclass
 from typing import BinaryIO, List, Optional, Sequence, TextIO, Union
 
@@ -323,6 +325,10 @@ def load_nexus(fname: Union[str, BinaryIO]) -> List[OrsoDataset]:
     return [_from_nexus_group(g) for g in root.values() if g.attrs.get("ORSO_class", None) == "OrsoDataset"]
 
 
+def to_nx_name(string: str):
+    return re.sub(r"[^a-zA-Z0-9_]+", "", str(string).replace(" ", "_"))
+
+
 def save_nexus(datasets: List[OrsoDataset], fname: Union[str, BinaryIO], comment: Optional[str] = None) -> BinaryIO:
     import h5py
 
@@ -348,13 +354,13 @@ def save_nexus(datasets: List[OrsoDataset], fname: Union[str, BinaryIO], comment
 
         for dsi in datasets:
             info = dsi.info
-            entry = f.create_group(str(info.data_set))
+            entry = f.create_group("entry_" + to_nx_name(info.data_set))
             entry.attrs["ORSO_class"] = "OrsoDataset"
             entry.attrs["ORSO_VERSION"] = ORSO_VERSION
             entry.attrs["NX_class"] = "NXentry"
             entry.attrs["default"] = "plottable_data"
             info.to_nexus(root=entry, name="info")
-            entry['info'].attrs["NX_class"] = "NXcollection"
+            entry["info"].attrs["NX_class"] = "NXcollection"
             data_group = entry.create_group("data")
             data_group.attrs["sequence"] = 1
             data_group.attrs["NX_class"] = "NXcollection"
@@ -382,5 +388,7 @@ def save_nexus(datasets: List[OrsoDataset], fname: Union[str, BinaryIO], comment
                         col_data.attrs["units"] = column.unit
 
                 plottable_data_group[nexus_colname] = col_data
+
+            entry.create_dataset("program_name", data="orsopy")
             for m in NXMAPPINGS:
                 m(entry)

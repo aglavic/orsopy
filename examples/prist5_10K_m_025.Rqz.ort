@@ -2,8 +2,8 @@
 # data_source:
 #   owner:
 #     name: Artur Glavic
-#     affiliation: null
-#     contact: b''
+#     affiliation: PSI Center for Neutron and Muon Sciences
+#     contact: artur.glavic@psi.ch
 #   experiment:
 #     title: Structural evolution of the CO2/Water interface
 #     instrument: Amor
@@ -14,7 +14,7 @@
 #   sample:
 #     name: prist4
 #     sample_parameters:
-#       tempMean: {magnitude: -9999.0}
+#       temperature: {magnitude: -9999.0}
 #     model:
 #       stack: vacuum | Al2O3 2 | Ti0.27Co0.73 9.3 | Si
 #   measurement:

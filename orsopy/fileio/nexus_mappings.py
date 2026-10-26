@@ -75,9 +75,18 @@ NXMAPPINGS: List[NexusMapping] = [
         "sample",
         "NXsample",
         name="data_source/sample/name",
-        temperature="data_source/sample/temperature",
-        electric_field="data_source/sample/electric_field",
-        magnetic_field="data_source/sample/magnetic_field",
+        temperature=(
+            "data_source/sample/sample_parameters/temperature/magnitude",
+            "data_source/sample/sample_parameters/temperature/_mean",
+        ),
+        electric_field=(
+            "data_source/sample/sample_parameters/electric_field/magnitude",
+            "data_source/sample/sample_parameters/electric_field/_mean",
+        ),
+        magnetic_field=(
+            "data_source/sample/sample_parameters/magnetic_field/magnitude",
+            "data_source/sample/sample_parameters/magnetic_field/_mean",
+        ),
         description="data_source/sample/description",
     ),
     NexusGroup(
@@ -97,7 +106,6 @@ NXMAPPINGS: List[NexusMapping] = [
         "NXbeam",
         incident_wavelength=(
             "data_source/measurement/instrument_settings/wavelength/magnitude",
-            "data_source/measurement/instrument_settings/wavelength/individual_magnitudes",
             "data_source/measurement/instrument_settings/wavelength/_mean",
         ),
     ),

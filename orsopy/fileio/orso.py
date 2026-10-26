@@ -277,6 +277,9 @@ def _from_nexus_group(group):
     else:
         dct = dict()
         for name, value in group.items():
+            if name.startswith("_"):
+                # ignore extra items added just for nexus
+                continue
             dct[name] = _get_nexus_item(value)
 
         ORSO_class = group.attrs.get("ORSO_class", None)
@@ -310,7 +313,15 @@ def _get_nexus_item(value):
             # it is a bytes object, should be string
             return v.decode()
         else:
-            return v
+            container = value.attrs.get("container", None)
+            if container is None:
+                return v
+            elif container == "list":
+                return v.tolist()
+            elif container == "tuple":
+                return tuple(v)
+            else:
+                raise ValueError(f"Unknown container type: {container}")
 
 
 def _load_nexus_dataset(group):

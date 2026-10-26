@@ -467,18 +467,23 @@ class Header:
             if isinstance(value, Header):
                 value.to_nexus(root=group, name=child_name)
             elif isinstance(value, (list, tuple)):
-                child_group = group.create_group(child_name)
-                child_group.attrs["sequence"] = 1
-                for index, item in enumerate(value):
-                    # use the 'name' attribute of children if it exists, else index:
-                    sub_name = getattr(item, "name", f"item_{index}")
-                    if isinstance(item, Header):
-                        item_out = item.to_nexus(root=child_group, name=sub_name)
-                    else:
-                        t_value = nexus_value_converter(item)
-                        item_out = Header._item_to_nexus(child_group, sub_name, t_value)
-                    if item_out is not None:
-                        item_out.attrs["sequence_index"] = index
+                # if all items are either float or int represent data as single dataset instead of group
+                if all(isinstance(item, float) for item in value) or all(isinstance(item, int) for item in value):
+                    item_out = group.create_dataset(child_name, data=value)
+                    item_out.attrs["container"] = type(value).__name__
+                else:
+                    child_group = group.create_group(child_name)
+                    child_group.attrs["sequence"] = 1
+                    for index, item in enumerate(value):
+                        # use the 'name' attribute of children if it exists, else index:
+                        sub_name = getattr(item, "name", f"item_{index}")
+                        if isinstance(item, Header):
+                            item_out = item.to_nexus(root=child_group, name=sub_name)
+                        else:
+                            t_value = nexus_value_converter(item)
+                            item_out = Header._item_to_nexus(child_group, sub_name, t_value)
+                        if item_out is not None:
+                            item_out.attrs["sequence_index"] = index
             else:
                 # here _todict converts objects that aren't derived from Header
                 # and therefore don't have to_dict methods.

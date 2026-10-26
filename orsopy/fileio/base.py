@@ -477,7 +477,8 @@ class Header:
                     else:
                         t_value = nexus_value_converter(item)
                         item_out = Header._item_to_nexus(child_group, sub_name, t_value)
-                    item_out.attrs["sequence_index"] = index
+                    if item_out is not None:
+                        item_out.attrs["sequence_index"] = index
             else:
                 # here _todict converts objects that aren't derived from Header
                 # and therefore don't have to_dict methods.
@@ -497,19 +498,6 @@ class Header:
         if unit is not None:
             # raise UnicodeError if not ascii
             unit.encode("ascii")
-
-    def __repr__(self):
-        """
-        Representation that does not show empty arguments.
-        """
-        out = f"{self.__class__.__name__}("
-        for fi in fields(self):
-            if fi.name in self._orso_optionals and getattr(self, fi.name) is None:
-                # ignore empty optional arguments
-                continue
-            out += f"{fi.name}={getattr(self, fi.name)!r}, "
-        out = out[:-2] + ")"
-        return out
 
     def _staggered_repr(self):
         """

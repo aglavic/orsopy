@@ -846,7 +846,7 @@ class ErrorColumn(Header):
         """
         A convenience property to allow programs to get a valid name attribute for any column.
         """
-        return f"s{self.error_of}"
+        return f"{self.error_of}_error"
 
     @property
     def to_sigma(self):

@@ -655,7 +655,7 @@ class TestErrorColumn(unittest.TestCase):
         assert value.error_type == "resolution"
         assert value.distribution == "gaussian"
         assert value.value_is == "sigma"
-        assert value.name == "sq"
+        assert value.name == "q_error"
 
     def test_bad_type(self):
         """

@@ -156,7 +156,8 @@ class OrsoDataset:
     data: Union[np.ndarray, Sequence[np.ndarray], Sequence[Sequence]]
 
     def __post_init__(self):
-        if self.data.shape[1] != len(self.info.columns):
+        data = np.array(self.data)
+        if data.shape[1] != len(self.info.columns):
             raise ValueError("Data has to have the same number of columns as header")
 
     @classmethod
@@ -391,8 +392,6 @@ def save_nexus(datasets: List[OrsoDataset], fname: Union[str, BinaryIO], comment
                 # assume that dataset.data has dimension == ncolumns along first dimension
                 # (note that this is not how data would be loaded from e.g. load_orso, which is row-first)
                 nexus_colname = to_nx_name(column.name)
-                if isinstance(column, ErrorColumn):
-                    nexus_colname = to_nx_name(column.error_of) + "_errors"
                 col_data = data_group.create_dataset(nexus_colname, data=dsi.data[:, column_index])
                 col_data.attrs["sequence_index"] = column_index
                 col_data.attrs["target"] = col_data.name
